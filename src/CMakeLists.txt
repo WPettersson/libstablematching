@@ -1,0 +1,8 @@
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+SET(SOURCES
+  Agent.cpp
+  smti.cpp
+  main.cpp
+  )
+
+ADD_EXECUTABLE(smti ${SOURCES})
