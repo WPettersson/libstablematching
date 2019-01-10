@@ -81,10 +81,12 @@ void Agent::add_dummy_pref_up_to(int start, int end) {
     _preferences.emplace_back(std::vector<int>());
     _dummy_rank = _preferences.size() - 1;
     _max_rank += 1;
+    _first_at_this_rank[_max_rank] = start;
   }
   for(int i = start; i <= end; ++i) {
     _preferences[_dummy_rank].push_back(i);
     _preferencesInOrder.push_back(i);
+    _ranks[i] = _max_rank;
   }
 }
 
