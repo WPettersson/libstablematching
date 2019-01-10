@@ -46,10 +46,10 @@ class Agent {
     int rank_of(const Agent & agent) const;
 
     /**
-     * Adds all IDs up to the given ID as dummy preferences. All dummies are
-     * given equal-last preference.
+     * Adds all IDs between the given values (inclusive) as dummy agents. All
+     * dummies are given equal-last preference.
      */
-    void add_dummy_pref_up_to(int id);
+    void add_dummy_pref_up_to(int start, int end);
 
     /**
      * Removes all IDs after the given ID (not inclusive). These are assumed to

@@ -116,10 +116,10 @@ void SMTI::add_dummy(int num_dummy) {
 
   // Add the dummies as compatible to all existing agents.
   for(auto & one: _ones) {
-    one.add_dummy_pref_up_to(_size + num_dummy);
+    one.add_dummy_pref_up_to(_size + 1, _size + num_dummy);
   }
   for(auto & two: _twos) {
-    two.add_dummy_pref_up_to(_size + num_dummy);
+    two.add_dummy_pref_up_to(_size + 1, _size + num_dummy);
   }
   _size += num_dummy;
   _num_dummies += num_dummy;

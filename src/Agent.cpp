@@ -76,13 +76,13 @@ int Agent::position_of(int id) const {
   return -1;
 }
 
-void Agent::add_dummy_pref_up_to(int id) {
+void Agent::add_dummy_pref_up_to(int start, int end) {
   if (_dummy_rank == -1) {
     _preferences.emplace_back(std::vector<int>());
     _dummy_rank = _preferences.size() - 1;
     _max_rank += 1;
   }
-  for(int i = _preferencesInOrder.size() + 1; i <= id; ++i) {
+  for(int i = start; i <= end; ++i) {
     _preferences[_dummy_rank].push_back(i);
     _preferencesInOrder.push_back(i);
   }
