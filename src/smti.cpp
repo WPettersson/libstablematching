@@ -23,6 +23,13 @@ SMTI::SMTI(std::string filename) : _num_dummies(0) {
   std::string line;
   getline(infile, line);
   _size = std::stoi(line);
+  bool expect_capacity = false;
+  if (_size == 0) {
+    // Probably reading a file in format for 1810.02711
+    getline(infile, line);
+    _size = std::stoi(line);
+    expect_capacity = true;
+  }
   getline(infile, line);
   int second_size = std::stoi(line);
 
@@ -39,11 +46,11 @@ SMTI::SMTI(std::string filename) : _num_dummies(0) {
       if (token == ":") {
         continue;
       }
-      if (token.front() == '[') {
+      if ((token.front() == '[') || (token.front() == '('))  {
         token.erase(0, 1); // Remove [
         in_tie = true;
       }
-      if (token.back() == ']') {
+      if ((token.back() == ']')  || (token.back() == ')')) {
         token.pop_back();
         int i = std::stoi(token);
         tie.push_back(i);
@@ -67,18 +74,26 @@ SMTI::SMTI(std::string filename) : _num_dummies(0) {
     getline(infile, line);
     std::stringstream prefstream(line);
     prefstream >> id;
-    std::string colon;
-    prefstream >> colon;
     std::string token;
     std::vector<std::vector<int>> preferences;
     std::vector<int> tie;
     bool in_tie = false;
+    bool need_capacity = expect_capacity;
     while (prefstream >> token) {
-      if (token.front() == '[') {
+      if (token == ":") {
+        continue;
+      }
+      if (need_capacity) {
+        // We just pulled in the capacity, which is hopefully 1, but we ignore
+        // it.
+        expect_capacity = false;
+        continue;
+      }
+      if ((token.front() == '[') || (token.front() == '(')) {
         token.erase(0, 1); // Remove [
         in_tie = true;
       }
-      if (token.back() == ']') {
+      if ((token.back() == ']') || (token.back() == ')')) {
         token.pop_back();
         int i = std::stoi(token);
         tie.push_back(i);
