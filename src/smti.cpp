@@ -163,7 +163,7 @@ std::string SMTI::encodeSAT() {
   std::stringstream ss;
   int num_clauses = 0;
   // Clause 1
-  for (auto one: _ones) {
+  for (auto & one: _ones) {
     ss << _one_vars[std::make_tuple(one.id(), 1)] << " 0" << std::endl;
     num_clauses++;
     ss << "-" << _one_vars[std::make_tuple(one.id(), one.num_prefs() + 1)] <<
@@ -171,7 +171,7 @@ std::string SMTI::encodeSAT() {
     num_clauses++;
   }
   // Clause 2
-  for (auto two: _twos) {
+  for (auto & two: _twos) {
     ss << _two_vars[std::make_tuple(two.id(), 1)] << " 0" << std::endl;
     num_clauses++;
     ss << "-" << _two_vars[std::make_tuple(two.id(), two.num_prefs() + 1)] <<
@@ -179,7 +179,7 @@ std::string SMTI::encodeSAT() {
     num_clauses++;
   }
   // Clause 3
-  for (auto one: _ones) {
+  for (auto & one: _ones) {
     for (int i = 1; i <= one.prefs().size(); ++i) {
       ss << _one_vars[std::make_tuple(one.id(), i)] << " -" <<
            (_one_vars[std::make_tuple(one.id(), i)]+1) << " 0" << std::endl;
@@ -187,15 +187,16 @@ std::string SMTI::encodeSAT() {
     }
   }
   // Clause 4
-  for (auto two: _twos) {
+  for (auto & two: _twos) {
     for (int i = 1; i <= two.prefs().size(); ++i) {
       ss << _two_vars[std::make_tuple(two.id(), i)] << " -" <<
            (_two_vars[std::make_tuple(two.id(), i)]+1) << " 0" << std::endl;
       num_clauses++;
     }
   }
-  for (auto one: _ones) {
-    for (auto two: _twos) {
+  for (auto & one: _ones) {
+    for (auto two_id: one.prefs()) {
+      Agent &two = _twos[two_id - 1];
       int p = one.position_of(two);
       if (p == -1) {
         continue;
@@ -252,7 +253,7 @@ std::string SMTI::encodeWPMaxSAT() {
   int num_clauses = 0;
   int top_weight = 500;
   // Clause 1
-  for (auto one: _ones) {
+  for (auto & one: _ones) {
     ss << top_weight << " ";
     ss << _one_vars[std::make_tuple(one.id(), 1)] << " 0" << std::endl;
     num_clauses++;
@@ -262,7 +263,7 @@ std::string SMTI::encodeWPMaxSAT() {
     num_clauses++;
   }
   // Clause 2
-  for (auto two: _twos) {
+  for (auto & two: _twos) {
     ss << top_weight << " ";
     ss << _two_vars[std::make_tuple(two.id(), 1)] << " 0" << std::endl;
     num_clauses++;
@@ -272,7 +273,7 @@ std::string SMTI::encodeWPMaxSAT() {
     num_clauses++;
   }
   // Clause 3
-  for (auto one: _ones) {
+  for (auto & one: _ones) {
     for (int i = 1; i <= one.prefs().size(); ++i) {
       ss << top_weight << " ";
       ss << _one_vars[std::make_tuple(one.id(), i)] << " -" <<
@@ -281,7 +282,7 @@ std::string SMTI::encodeWPMaxSAT() {
     }
   }
   // Clause 4
-  for (auto two: _twos) {
+  for (auto & two: _twos) {
     for (int i = 1; i <= two.prefs().size(); ++i) {
       ss << top_weight << " ";
       ss << _two_vars[std::make_tuple(two.id(), i)] << " -" <<
@@ -289,8 +290,9 @@ std::string SMTI::encodeWPMaxSAT() {
       num_clauses++;
     }
   }
-  for (auto one: _ones) {
-    for (auto two: _twos) {
+  for (auto & one: _ones) {
+    for (auto two_id: one.prefs()) {
+      Agent &two = _twos[two_id - 1];
       int p = one.position_of(two);
       if (p == -1) {
         continue;
@@ -352,9 +354,9 @@ void SMTI::make_var_map() {
   _one_vars = std::unordered_map<std::tuple<int,int>, int>();
   _two_vars = std::unordered_map<std::tuple<int,int>, int>();
   int counter = 1; // DIMACS format starts at 1.
-  for(auto one: _ones) {
+  for(auto & one: _ones) {
     int pref_length = 1;
-    for(auto pref: one.prefs()) {
+    for(auto & pref: one.prefs()) {
       _one_vars[std::make_tuple(one.id(), pref_length)] = counter;
       counter++;
       pref_length++;
@@ -362,9 +364,9 @@ void SMTI::make_var_map() {
     _one_vars[std::make_tuple(one.id(), pref_length)] = counter;
     counter++;
   }
-  for(auto two: _twos) {
+  for(auto & two: _twos) {
     int pref_length = 1;
-    for(auto pref: two.prefs()) {
+    for(auto & pref: two.prefs()) {
       _two_vars[std::make_tuple(two.id(), pref_length)] = counter;
       counter++;
       pref_length++;
@@ -378,10 +380,10 @@ std::string SMTI::to_string() const {
   std::stringstream ss;
   ss << _ones.size() << std::endl;
   ss << _ones.size() << std::endl;
-  for(auto one: _ones) {
+  for(auto & one: _ones) {
     ss << one.pref_list_string() << std::endl;
   }
-  for(auto two: _twos) {
+  for(auto & two: _twos) {
     ss << two.pref_list_string() << std::endl;
   }
   return ss.str();
