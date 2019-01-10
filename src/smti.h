@@ -28,8 +28,11 @@ class SMTI {
     /**
      * Construct an instance from a file.
      */
-    //explicit SMTI(std::string filename);
-    //
+    explicit SMTI(std::string filename);
+
+    /**
+     * Construct an instance using the given parameters.
+     */
     SMTI(int size, int pref_length, float tie_density, std::mt19937 & generator);
 
     /**
@@ -38,9 +41,32 @@ class SMTI {
     std::string to_string() const;
 
     /**
-     * Create an encoding of the instance.
+     * Adds dummy variables to the instance.  We add num_dummy agents to either
+     * side, and each dummy finds every agent of the other side equally
+     * preferable. In other words, in an instance with N regular agents per
+     * side and X dummies, we will find a matching that finds at least (N-X)
+     * pairings of agents.
+     *
+     * param num_dummy
+     */
+    void add_dummy(int num_dummy);
+
+    /**
+     * Removes dummy variables from this instance. Note that there is currently
+     * no safety checking: if you attempt to remove more dummies than you have
+     * added, unexpected behaviour (most likely a crash) will occur.
+     */
+    void remove_dummy(int num_dummy);
+
+    /**
+     * Create a SAT encoding of the instance.
      */
     std::string encodeSAT();
+
+    /**
+     * Create a Weighted Partial MaxSAT encoding of the instance.
+     */
+    std::string encodeWPMaxSAT();
 
     /**
      * Find a maximum sized stable matching.
@@ -48,8 +74,14 @@ class SMTI {
     void solve() const;
 
   private:
+    /**
+     * Create the maps from IDs/positions in preference lists to variable
+     * numbers as required by the DIMACS format.
+     */
     void make_var_map();
 
+    int _size;
+    int _num_dummies;
     std::vector<Agent> _ones;
     std::vector<Agent> _twos;
     std::unordered_map<std::tuple<int,int>, int> _one_vars;

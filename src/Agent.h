@@ -11,14 +11,29 @@ class Agent {
   public:
 
     static std::vector<int> preference_options;
-    //Agent(int id, std::vector<std::vector<unsigned int>> preferences);
+    /**
+     * Constructor that passes in the actual list of lists of preferences.
+     *
+     * param id The ID of this agent
+     * param preferences a vector of tie-groups of actual preferences
+     * param is_fummy true iff this agent is to just be a dummy
+     */
+    Agent(int id, std::vector<std::vector<int>> preferences, bool is_dummy = false);
 
+    /**
+     * Constructor using random number generator
+     */
     Agent(int id, int pref_length, float tie_density, std::mt19937 & generator);
 
     /**
      * The ID of this agent.
      */
     int id() const {return this->_id; }
+
+    /**
+     * The number of preferences this agent has.
+     */
+    int num_prefs() const {return this->_preferencesInOrder.size(); }
 
     /**
      * Return a human-readable representation of this agent.
@@ -31,10 +46,27 @@ class Agent {
     int rank_of(const Agent & agent) const;
 
     /**
+     * Adds all IDs up to the given ID as dummy preferences. All dummies are
+     * given equal-last preference.
+     */
+    void add_dummy_pref_up_to(int id);
+
+    /**
+     * Removes all IDs after the given ID (not inclusive). These are assumed to
+     * be dummy IDs.
+     */
+    void remove_dummies(int id);
+
+    /**
+     * Is the given agent compatible with this agent?
+     */
+    bool is_compatible(const Agent & agent) const;
+
+    /**
      * Return the position of the given agent. Note that this is _not_ the rank
      * of the agent. Note that the first agent is at position 1, not 0, since
      * DIMACS.
-     * Returns -1 if the agent is not found.
+     * return -1 if the agent is not found.
      */
     int position_of(const Agent & agent) const;
     int position_of(int) const;
@@ -59,6 +91,8 @@ class Agent {
   private:
     int _id;
     int _max_rank;
+
+    signed int _dummy_rank;
     std::vector<std::vector<signed int>> _preferences;
     std::vector<signed int> _preferencesInOrder;
     std::map<int, int> _ranks;
