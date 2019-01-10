@@ -31,13 +31,14 @@ SMTI::SMTI(std::string filename) : _num_dummies(0) {
     getline(infile, line);
     std::stringstream prefstream(line);
     prefstream >> id;
-    std::string colon;
-    prefstream >> colon;
     std::string token;
     std::vector<std::vector<int>> preferences;
     std::vector<int> tie;
     bool in_tie = false;
     while (prefstream >> token) {
+      if (token == ":") {
+        continue;
+      }
       if (token.front() == '[') {
         token.erase(0, 1); // Remove [
         in_tie = true;
