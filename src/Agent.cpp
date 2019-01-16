@@ -5,10 +5,11 @@
 
 std::vector<int> Agent::preference_options = std::vector<int>();
 
-Agent::Agent(int id, int pref_length, float tie_density, std::mt19937 & generator) : _id(id), _dummy_rank(-1) {
+Agent::Agent(int id, int pref_length, float tie_density,
+    std::mt19937 & generator) : _id(id), _dummy_rank(-1) {
   std::sample(Agent::preference_options.begin(), Agent::preference_options.end(),
               std::back_inserter(this->_preferencesInOrder),
-               pref_length, generator);
+              pref_length, generator);
   std::vector<int> tie = std::vector<int>();
   _ranks = std::map<int, int>();
   _first_at_this_rank = std::map<int, int>();
