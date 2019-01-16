@@ -1,25 +1,22 @@
+#include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <random>
 
 #include "smti.h"
 
 int main(int argc, char *argv[]) {
-  int seed = 24601;
-  std::mt19937 g(seed);
-  SMTI instance(10, 5, 0.75, g);
-  std::cout << instance.to_string();
-  instance.add_dummy(1);
-  std::cout << instance.to_string();
-  instance.add_dummy(3);
-  std::cout << instance.to_string();
-  instance.remove_dummy(2);
-  std::cout << instance.to_string();
-  instance.remove_dummy(2);
-  std::cout << instance.to_string();
-  std::cout << instance.encodeWPMaxSAT();
-  SMTI instance_two("test.instance");
-  std::cout << instance_two.to_string();
-  std::cout << instance_two.encodeSAT();
-  std::cout << instance_two.encodeWPMaxSAT();
+  //int seed = 24601;
+  //std::mt19937 g(seed);
+  std::random_device rd;
+  std::mt19937 g(rd());
+  SMTI instance(atoi(argv[1]), atoi(argv[2]), atof(argv[3]), g);
+  std::string fname(argv[4]);
+  std::ofstream humanfile(fname + ".instance");
+  humanfile << instance.to_string();
+  humanfile.close();
+  std::ofstream wcnffile(fname + ".wcnf");
+  wcnffile << instance.encodeWPMaxSAT();
+  wcnffile.close();
   return 0;
 }
