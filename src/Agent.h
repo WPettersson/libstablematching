@@ -26,6 +26,13 @@ class Agent {
     Agent(int id, int pref_length, float tie_density, std::mt19937 & generator);
 
     /**
+     * Constructor using random number generator, but instead of giving the
+     * number of preferences to choose, it explicitly gives the exact
+     * preferences to use.
+     */
+    Agent(int id, const std::vector<int> & partners, float tie_density, std::mt19937 & generator);
+
+    /**
      * The ID of this agent.
      */
     int id() const {return this->_id; }

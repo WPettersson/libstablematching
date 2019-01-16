@@ -12,11 +12,18 @@ SMTI::SMTI(int size, int pref_length, float tie_density, std::mt19937 & generato
     Agent::preference_options.push_back(i);
   }
 
+  std::vector<std::vector<int>> two_prefs(size+1);
   for(int i = 1; i <= size; ++i) {
     _ones.emplace_back(Agent(i, pref_length, tie_density, generator));
-    _twos.emplace_back(Agent(i, pref_length, tie_density, generator));
+    for(auto pref: _ones.back().prefs()) {
+      two_prefs[pref].push_back(i);
+    }
+  }
+  for(int i = 1; i <= size; ++i) {
+    _twos.emplace_back(Agent(i, two_prefs[i], tie_density, generator));
   }
 }
+
 
 SMTI::SMTI(std::string filename) : _num_dummies(0) {
   std::ifstream infile(filename);

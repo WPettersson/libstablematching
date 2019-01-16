@@ -35,6 +35,40 @@ Agent::Agent(int id, int pref_length, float tie_density,
   _preferences.push_back(std::move(tie));
 }
 
+Agent::Agent(int id, const std::vector<int> & partners, float tie_density, std::mt19937 & generator) :
+  _id(id), _dummy_rank(-1) {
+  _ranks = std::map<int, int>();
+  _first_at_this_rank = std::map<int, int>();
+  _max_rank = 1;
+
+  if (partners.empty()) {
+    return;
+  }
+
+  std::sample(partners.begin(), partners.end(),
+              std::back_inserter(this->_preferencesInOrder),
+              partners.size(), generator);
+  std::vector<int> tie = std::vector<int>();
+  // Our distribution
+  std::uniform_real_distribution<float> distribution(0, 1);
+
+  for(int i: this->_preferencesInOrder) {
+    if (!tie.empty() && distribution(generator) >= tie_density) {
+      _preferences.push_back(std::move(tie));
+      tie = std::vector<int>();
+      _max_rank += 1;
+    }
+    _ranks[i] = _max_rank;
+    auto found = _first_at_this_rank.find(_max_rank);
+    if (found == _first_at_this_rank.end()) {
+      _first_at_this_rank[_max_rank] = i;
+    }
+    tie.push_back(i);
+  }
+  // Last tie group
+  _preferences.push_back(std::move(tie));
+}
+
 Agent::Agent(int id, std::vector<std::vector<int>> preferences, bool is_dummy) : _id(id), _dummy_rank(-1) {
   _ranks = std::map<int, int>();
   _first_at_this_rank = std::map<int, int>();
