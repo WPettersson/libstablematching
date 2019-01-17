@@ -18,8 +18,7 @@ namespace std {
       return std::get<0>(tt) * 500 + std::get<1>(tt);
     }
   };
-}
-
+} // namespace std
 
 
 class SMTI {
@@ -69,6 +68,11 @@ class SMTI {
     std::string encodeWPMaxSAT();
 
     /**
+     * Create a pseudo-boolean optimisation encoding of the instance.
+     */
+    std::string encodePBO();
+
+    /**
      * Find a maximum sized stable matching.
      */
     void solve() const;
@@ -76,7 +80,8 @@ class SMTI {
   private:
     /**
      * Create the maps from IDs/positions in preference lists to variable
-     * numbers as required by the DIMACS format.
+     * indices. Indices, and therefore variables, start at 1 in the land of
+     * SAT.
      */
     void make_var_map();
 

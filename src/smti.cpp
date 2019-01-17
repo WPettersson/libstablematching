@@ -357,10 +357,106 @@ std::string SMTI::encodeWPMaxSAT() {
   return start.str();
 }
 
+
+std::string SMTI::encodePBO() {
+  make_var_map();
+  std::stringstream ss;
+  int num_clauses = 0;
+  // Clause 1
+  for (auto & one: _ones) {
+    ss << "1 x" << _one_vars[std::make_tuple(one.id(), 1)] << " = 1;" << std::endl;
+    num_clauses++;
+  }
+  // Clause 2
+  for (auto & two: _twos) {
+    ss << "1 x" << _two_vars[std::make_tuple(two.id(), 1)] << " = 1;" << std::endl;
+    num_clauses++;
+  }
+  // Clause 3
+  for (auto & one: _ones) {
+    for (size_t i = 1; i <= one.prefs().size(); ++i) {
+      ss << "1 x" << _one_vars[std::make_tuple(one.id(), i)] << " 1 ~x" <<
+            (_one_vars[std::make_tuple(one.id(), i)]+1) << " >= 1;" << std::endl;
+      num_clauses++;
+    }
+  }
+  // Clause 4
+  for (auto & two: _twos) {
+    for (size_t i = 1; i <= two.prefs().size(); ++i) {
+      ss << "1 x" << _two_vars[std::make_tuple(two.id(), i)] << " 1 ~x" <<
+            (_two_vars[std::make_tuple(two.id(), i)]+1) << " >= 1;" << std::endl;
+      num_clauses++;
+    }
+  }
+  for (auto & one: _ones) {
+    for (auto two_id: one.prefs()) {
+      Agent &two = _twos[two_id - 1];
+      int p = one.position_of(two);
+      if (p == -1) {
+        continue;
+      }
+      int q = two.position_of(one);
+      if (q == -1) {
+        continue;
+      }
+      // Clause 5
+      ss << "1 ~x" << _one_vars[std::make_tuple(one.id(), p)] << " 1 x" <<
+         (_one_vars[std::make_tuple(one.id(), p)]+1) << " 1 x" <<
+         _two_vars[std::make_tuple(two.id(), q)] << " >= 1;" << std::endl;
+      num_clauses++;
+      ss << "1 ~x" << _one_vars[std::make_tuple(one.id(), p)] << " 1 x" <<
+         (_one_vars[std::make_tuple(one.id(), p)]+1) << " 1 x" <<
+         (_two_vars[std::make_tuple(two.id(), q)]+1) << " >= 1;" << std::endl;
+      num_clauses++;
+      // Clause 6
+      ss << "1 ~x" << _two_vars[std::make_tuple(two.id(), q)] << " 1 x" <<
+         (_two_vars[std::make_tuple(two.id(), q)]+1) << " 1 x" <<
+         _one_vars[std::make_tuple(one.id(), p)] << " >= 1;" << std::endl;
+      num_clauses++;
+      ss << "1 ~x" << _two_vars[std::make_tuple(two.id(), q)] << " 1 x" <<
+         (_two_vars[std::make_tuple(two.id(), q)]+1) << " 1 x" <<
+         (_one_vars[std::make_tuple(one.id(), p)]+1) << " >= 1;" << std::endl;
+      num_clauses++;
+      int pplus = one.position_of_next_worst(two);
+      if (pplus < 0) {
+        continue;
+      }
+      int qplus = two.position_of_next_worst(one);
+      if (qplus < 0) {
+        continue;
+      }
+      // Clause 7
+      ss << "1 ~x" << _one_vars[std::make_tuple(one.id(), pplus)] << " 1 ~x" <<
+        _two_vars[std::make_tuple(two.id(), qplus)] << " >= 1;" << std::endl;
+      num_clauses++;
+      // Clause 8
+      ss << "1 ~x" << _two_vars[std::make_tuple(two.id(), qplus)] << " 1 ~x" <<
+        _one_vars[std::make_tuple(one.id(), pplus)] << " >= 1;" << std::endl;
+      num_clauses++;
+    }
+  }
+  std::stringstream start;
+  start << "* #variable= " << (_one_vars.size() + _two_vars.size()) << " #constraint= " << num_clauses;
+  // npSolver needs at least one more comment line. I don't know why, but
+  // deleting it makes npSolver crash.
+  start << std::endl << "* silly comment" << std::endl;
+  start << "min:";
+  for (auto & one: _ones) {
+    start << " 1 x" << _one_vars[std::make_tuple(one.id(), one.num_prefs() + 1)];
+  }
+  for (auto & two: _twos) {
+    start << " 1 x" << _two_vars[std::make_tuple(two.id(), two.num_prefs() + 1)];
+  }
+  start << " ;" << std::endl;
+  start << ss.str();
+  return start.str();
+}
+
+
 void SMTI::make_var_map() {
   _one_vars = std::unordered_map<std::tuple<int,int>, int>();
   _two_vars = std::unordered_map<std::tuple<int,int>, int>();
-  int counter = 1; // DIMACS format starts at 1.
+  int counter = 1;
   for(auto & one: _ones) {
     int pref_length = 1;
     for(auto & pref: one.prefs()) {
