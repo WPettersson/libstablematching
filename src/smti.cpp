@@ -187,7 +187,7 @@ std::string SMTI::encodeSAT() {
   }
   // Clause 3
   for (auto & one: _ones) {
-    for (int i = 1; i <= one.prefs().size(); ++i) {
+    for (size_t i = 1; i <= one.prefs().size(); ++i) {
       ss << _one_vars[std::make_tuple(one.id(), i)] << " -" <<
            (_one_vars[std::make_tuple(one.id(), i)]+1) << " 0" << std::endl;
       num_clauses++;
@@ -195,7 +195,7 @@ std::string SMTI::encodeSAT() {
   }
   // Clause 4
   for (auto & two: _twos) {
-    for (int i = 1; i <= two.prefs().size(); ++i) {
+    for (size_t i = 1; i <= two.prefs().size(); ++i) {
       ss << _two_vars[std::make_tuple(two.id(), i)] << " -" <<
            (_two_vars[std::make_tuple(two.id(), i)]+1) << " 0" << std::endl;
       num_clauses++;
@@ -281,7 +281,7 @@ std::string SMTI::encodeWPMaxSAT() {
   }
   // Clause 3
   for (auto & one: _ones) {
-    for (int i = 1; i <= one.prefs().size(); ++i) {
+    for (size_t i = 1; i <= one.prefs().size(); ++i) {
       ss << top_weight << " ";
       ss << _one_vars[std::make_tuple(one.id(), i)] << " -" <<
            (_one_vars[std::make_tuple(one.id(), i)]+1) << " 0" << std::endl;
@@ -290,7 +290,7 @@ std::string SMTI::encodeWPMaxSAT() {
   }
   // Clause 4
   for (auto & two: _twos) {
-    for (int i = 1; i <= two.prefs().size(); ++i) {
+    for (size_t i = 1; i <= two.prefs().size(); ++i) {
       ss << top_weight << " ";
       ss << _two_vars[std::make_tuple(two.id(), i)] << " -" <<
            (_two_vars[std::make_tuple(two.id(), i)]+1) << " 0" << std::endl;
