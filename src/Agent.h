@@ -91,6 +91,13 @@ class Agent {
     const std::vector<int> prefs() const;
 
     /**
+     * Returns the list of agents which are at least as good as the given
+     * agent, according to this agent.
+     */
+    std::vector<int> as_good_as(int id) const;
+    std::vector<int> as_good_as(const Agent & agent) const;
+
+    /**
      * Returns a string showing this agents preferences.
      */
     std::string pref_list_string() const;

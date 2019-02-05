@@ -254,6 +254,120 @@ std::string SMTI::encodeSAT() {
   return start.str();
 }
 
+std::string SMTI::encodeMZN(bool optimise) {
+  std::stringstream ss;
+  std::vector<std::string> vars;
+  for(auto & one: _ones) {
+    for(auto & two: _twos) {
+      if (one.is_compatible(two)) {
+        std::string name = "x" + std::to_string(one.id()) + "_" + std::to_string(two.id());
+        ss << "var 0..1: " << name << ";" << std::endl;
+        vars.push_back(std::move(name));
+      }
+    }
+  }
+
+  // Ones capacity
+  for(auto & one: _ones) {
+    if (one.prefs().size() == 0) {
+      continue;
+    }
+    ss << "constraint ";
+    bool first = true;
+    for(int two_id: one.prefs()) {
+      if (! first) {
+        ss << " + ";
+      }
+      first = false;
+      ss << "x" << one.id() << "_" << two_id;
+    }
+    if (optimise) {
+      ss << " <= 1;" << std::endl;
+    } else {
+      ss << " = 1;" << std::endl;
+    }
+  }
+  // Twos capacity
+  for(auto & two: _twos) {
+    if (two.prefs().size() == 0) {
+      continue;
+    }
+    ss << "constraint ";
+    bool first = true;
+    for(int one_id: two.prefs()) {
+      if (! first) {
+        ss << " + ";
+      }
+      first = false;
+      ss << "x" << one_id << "_" << two.id();
+    }
+    ss << " <= 1;" << std::endl;
+  }
+  // Stability constraints
+  for(auto & one: _ones) {
+    for(int two_id: one.prefs()) {
+      Agent &two = _twos[two_id - 1];
+      ss << "constraint 1 - (";
+      bool first = true;
+      for(auto other: one.as_good_as(two)) {
+        if (! first) {
+          ss << " + ";
+        }
+        first = false;
+        ss << "x" << one.id() << "_" << other;
+      }
+      ss << ") <= (";
+      first = true;
+      for(auto other: two.as_good_as(one)) {
+        if (! first) {
+          ss << " + ";
+        }
+        first = false;
+        ss << "x" << other << "_" << two.id();
+      }
+      ss << ");" << std::endl;
+    }
+  }
+  if (optimise) {
+    ss << "solve maximize ";
+    bool first = true;
+    for(auto & name: vars) {
+      if (! first) {
+        ss << " + " << std::endl;
+      }
+      ss << name;
+      first = false;
+    }
+    ss << ";" << std::endl;
+  } else {
+    ss << "solve satisfy;" << std::endl;
+  }
+
+  if (optimise) {
+    ss << "output [ \"Max is \" ++ show(";
+    bool first = true;
+    for(auto & name: vars) {
+      if (! first) {
+        ss << " + " << std::endl;
+      }
+      ss << name;
+      first = false;
+    }
+    ss << ")];" << std::endl;
+  }
+  //ss << "output [ ";
+  //bool first = true;
+  //for(auto & name: vars) {
+  //  if (! first) {
+  //    ss << " ++ " << std::endl;
+  //  }
+  //  ss << "if fix(" << name << " == 1) then \"" << name << ", \" else \"\" endif ";
+  //  first = false;
+  //}
+  //ss << "];" << std::endl;
+  return ss.str();
+}
+
 std::string SMTI::encodeWPMaxSAT() {
   make_var_map();
   std::stringstream ss;

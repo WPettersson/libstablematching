@@ -96,6 +96,27 @@ int Agent::rank_of(const Agent & agent) const {
   return _ranks.at(agent.id());
 }
 
+std::vector<int> Agent::as_good_as(const Agent & agent) const {
+  return as_good_as(agent.id());
+}
+
+std::vector<int> Agent::as_good_as(int id) const {
+  std::vector<int> res;
+  for (auto group: _preferences) {
+    bool found_here = false;
+    for (auto pref: group) {
+      res.push_back(pref);
+      if (pref == id) {
+        found_here = true;
+      }
+    }
+    if (found_here) {
+      return res;
+    }
+  }
+  return res;
+}
+
 int Agent::position_of(const Agent & agent) const {
   return this->position_of(agent.id());
 }

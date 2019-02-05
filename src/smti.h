@@ -73,6 +73,14 @@ class SMTI {
     std::string encodePBO();
 
     /**
+     * Create a Minizinc constraint programming encoding of the instance.
+     *
+     * param optimise If true, try to optimise the size. If false, search for a
+     * complete matching.
+     */
+    std::string encodeMZN(bool optimise=false);
+
+    /**
      * Find a maximum sized stable matching.
      */
     void solve() const;
