@@ -80,6 +80,19 @@ class SMTI {
      */
     std::string encodeMZN(bool optimise=false);
 
+#ifdef CPLEX_FOUND
+    /**
+     * Formulates the problem as an IP optimisation problem, and solves it
+     * using CPLEX.
+     *
+     * :param optimise: If false, create a COM-SMTI instance which requires
+     * everyone to be in a matching. Note that this assumes that the number of
+     * agents on either side is equal, it does not do this check for you.
+     * :return: The number of matchings in the optimal solution.
+     */
+    double solve_cplex(bool optimise=true);
+#endif
+
     /**
      * Find a maximum sized stable matching.
      */
