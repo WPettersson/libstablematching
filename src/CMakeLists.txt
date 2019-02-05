@@ -4,6 +4,9 @@ SET(SOURCES
   smti.cpp
   )
 
-ADD_EXECUTABLE(smti ${SOURCES} main.cpp)
-ADD_EXECUTABLE(convert ${SOURCES} convert.cpp)
+ADD_LIBRARY(smti ${SOURCES})
+ADD_EXECUTABLE(main main.cpp)
+TARGET_LINK_LIBRARIES(main smti)
+ADD_EXECUTABLE(convert convert.cpp)
+TARGET_LINK_LIBRARIES(convert smti)
 
