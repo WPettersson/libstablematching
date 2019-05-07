@@ -9,4 +9,6 @@ ADD_EXECUTABLE(main main.cpp)
 TARGET_LINK_LIBRARIES(main smti)
 ADD_EXECUTABLE(convert convert.cpp)
 TARGET_LINK_LIBRARIES(convert smti)
+ADD_EXECUTABLE(pbo pbo.cpp)
+TARGET_LINK_LIBRARIES(pbo smti)
 
