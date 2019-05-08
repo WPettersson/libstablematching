@@ -554,6 +554,22 @@ std::string SMTI::encodePBO() {
   // npSolver needs at least one more comment line. I don't know why, but
   // deleting it makes npSolver crash.
   start << std::endl << "* silly comment" << std::endl;
+  for (auto & one: _ones) {
+    int pref_length = 1;
+    for(auto & pref: one.prefs()) {
+      start << "* " << one.id() << " with " << pref << " is " <<_one_vars[std::make_tuple(one.id(), pref_length)] << std::endl;
+      pref_length++;
+    }
+    start << "* " << one.id() << " unassigned is " <<_one_vars[std::make_tuple(one.id(), pref_length)] << std::endl;
+  }
+  for (auto & two: _twos) {
+    int pref_length = 1;
+    for(auto & pref: two.prefs()) {
+      start << "* " << pref << " with " << two.id() << " is " <<_two_vars[std::make_tuple(two.id(), pref_length)] << std::endl;
+      pref_length++;
+    }
+    start << "* " << two.id() << " unassigned is " <<_two_vars[std::make_tuple(two.id(), pref_length)] << std::endl;
+  }
   start << "min:";
   for (auto & one: _ones) {
     start << " 1 x" << _one_vars[std::make_tuple(one.id(), one.num_prefs() + 1)];
