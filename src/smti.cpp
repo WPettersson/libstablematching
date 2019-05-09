@@ -572,10 +572,10 @@ std::string SMTI::encodePBO() {
   }
   start << "min:";
   for (auto & one: _ones) {
-    start << " 1 ~x" << _one_vars[std::make_tuple(one.id(), one.num_prefs() + 1)];
+    start << " 1 x" << _one_vars[std::make_tuple(one.id(), one.num_prefs() + 1)];
   }
   for (auto & two: _twos) {
-    start << " 1 ~x" << _two_vars[std::make_tuple(two.id(), two.num_prefs() + 1)];
+    start << " 1 x" << _two_vars[std::make_tuple(two.id(), two.num_prefs() + 1)];
   }
   start << " ;" << std::endl;
   start << ss.str();
