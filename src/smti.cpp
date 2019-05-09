@@ -515,21 +515,21 @@ std::string SMTI::encodePBO() {
       }
       // Clause 5
       ss << "1 ~x" << _one_vars[std::make_tuple(one.id(), p)] << " 1 x" <<
-         (_one_vars[std::make_tuple(one.id(), p)]+1) << " 1 x" <<
+         (_one_vars[std::make_tuple(one.id(), p+1)]) << " 1 x" <<
          _two_vars[std::make_tuple(two.id(), q)] << " >= 1;" << std::endl;
       num_clauses++;
       ss << "1 ~x" << _one_vars[std::make_tuple(one.id(), p)] << " 1 x" <<
-         (_one_vars[std::make_tuple(one.id(), p)]+1) << " 1 x" <<
-         (_two_vars[std::make_tuple(two.id(), q)]+1) << " >= 1;" << std::endl;
+         (_one_vars[std::make_tuple(one.id(), p+1)]) << " 1 ~x" <<
+         (_two_vars[std::make_tuple(two.id(), q+1)]) << " >= 1;" << std::endl;
       num_clauses++;
       // Clause 6
       ss << "1 ~x" << _two_vars[std::make_tuple(two.id(), q)] << " 1 x" <<
-         (_two_vars[std::make_tuple(two.id(), q)]+1) << " 1 x" <<
+         (_two_vars[std::make_tuple(two.id(), q+1)]) << " 1 x" <<
          _one_vars[std::make_tuple(one.id(), p)] << " >= 1;" << std::endl;
       num_clauses++;
       ss << "1 ~x" << _two_vars[std::make_tuple(two.id(), q)] << " 1 x" <<
-         (_two_vars[std::make_tuple(two.id(), q)]+1) << " 1 x" <<
-         (_one_vars[std::make_tuple(one.id(), p)]+1) << " >= 1;" << std::endl;
+         (_two_vars[std::make_tuple(two.id(), q+1)]) << " 1 ~x" <<
+         (_one_vars[std::make_tuple(one.id(), p+1)]) << " >= 1;" << std::endl;
       num_clauses++;
       int pplus = one.position_of_next_worst(two);
       if (pplus < 0) {
