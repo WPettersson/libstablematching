@@ -18,5 +18,8 @@ int main(int argc, char *argv[]) {
   std::ofstream wcnffile(fname + ".pbo");
   wcnffile << instance.encodePBO();
   wcnffile.close();
+#ifdef CPLEX_FOUND
+  std::cout << "CPLEX found " << instance.solve_cplex() << std::endl;
+#endif
   return 0;
 }
