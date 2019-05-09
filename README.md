@@ -50,10 +50,14 @@ The encoding is in a similar DIMACS form (see
 
 This uses the OPB format as described in
 [https://github.com/elffersj/roundingsat/blob/master/InputFormats.md](https://github.com/elffersj/roundingsat/blob/master/InputFormats.md).
+The objective in such an encoding is to minimise the number of agents who are
+not matched.
 
 ### Integer programming optimisation
 
 This actually calls CPLEX directly, but CPLEX creates an LP file as a
 by-product.
+The objective here is to maximise the number of matched pairs. This means that
+the total number of matched agents is twice the objective.
 
 
