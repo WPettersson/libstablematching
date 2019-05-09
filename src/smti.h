@@ -71,6 +71,11 @@ class SMTI {
      * Create a pseudo-boolean optimisation encoding of the instance.
      */
     std::string encodePBO();
+    
+    /**
+     * Create a pseudo-boolean optimisation encoding of the instance, with a PB-solver-friendly encoding.
+     */
+    std::string encodePBO2();
 
     /**
      * Create a Minizinc constraint programming encoding of the instance.
