@@ -641,9 +641,10 @@ std::string SMTI::encodePBO2() {
     }
   }
   // Redundant constraints
+  // _ones.size() - sum(dummy_l) == _twos.size() - sum(dummy_r)
   for(auto & one : _ones) ss << "1 x" << dummy_l[one.id()] << " ";
   for(auto & two : _twos) ss << "-1 x" << dummy_r[two.id()] << " ";
-  ss << "= 0;" << std::endl;
+  ss << "= " << _ones.size() - _twos.size() << ";" << std::endl;
   std::stringstream start;
   start << "* #variable= " << (_one_vars.size() + _two_vars.size()) << " #constraint= 0";
   // npSolver needs at least one more comment line. I don't know why, but
