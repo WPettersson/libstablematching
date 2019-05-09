@@ -1,5 +1,6 @@
 #include <fstream>
 #include <sstream>
+#include <set>
 
 #include "smti.h"
 
@@ -471,7 +472,6 @@ std::string SMTI::encodeWPMaxSAT() {
   return start.str();
 }
 
-
 std::string SMTI::encodePBO() {
   make_var_map();
   std::stringstream ss;
@@ -577,6 +577,93 @@ std::string SMTI::encodePBO() {
   for (auto & two: _twos) {
     start << " 1 x" << _two_vars[std::make_tuple(two.id(), two.num_prefs() + 1)];
   }
+  start << " ;" << std::endl;
+  start << ss.str();
+  return start.str();
+}
+
+std::string SMTI::encodePBO2() {
+  make_var_map();
+  std::stringstream ss;
+  std::map<int, std::map<int, int>> vars_lr;
+  std::map<int, int> dummy_l;
+  std::map<int, std::map<int, int>> vars_rl;
+  std::map<int, int> dummy_r;
+  std::vector<int> everything;
+  int nvars = 0;
+  for(auto & one: _ones) {
+    for(int two_id: one.prefs()) {
+      Agent & two = _twos[two_id-1];
+      if (vars_lr.count(one.id()) == 0) {
+        vars_lr.emplace(one.id(), std::map<int, int>());
+      }
+      if (vars_rl.count(two_id) == 0) {
+        vars_rl.emplace(two_id, std::map<int, int>());
+      }
+      int var = ++nvars;
+      vars_lr[one.id()][two_id] = var;
+      vars_rl[two_id][one.id()] = var;
+    }
+  }
+  for (auto & one : _ones) dummy_l[one.id()] = ++nvars;
+  for (auto & two : _twos) dummy_r[two.id()] = ++nvars;
+  // Ones capacity
+  for(auto & one: _ones) {
+    for(int two_id: one.prefs()) {
+	  ss << "1 x" << vars_lr[one.id()][two_id] << " ";
+    }
+    ss << "1 x" << dummy_l[one.id()] << " ";
+    ss << " = 1;" << std::endl;
+  }
+  // Twos capacity
+  for(auto & two: _twos) {
+    for(int one_id: two.prefs()) {
+	  ss << "1 x" << vars_lr[one_id][two.id()] << " ";
+    }
+    ss << "1 x" << dummy_r[two.id()] << " ";
+    ss << " = 1;" << std::endl;
+  }
+  // Stability constraints
+  for(auto & one: _ones) {
+    for(int two_id: one.prefs()) {
+      Agent &two = _twos[two_id - 1];
+      // 1 - first_sum <= second_sum
+      // first_sum + second_sum >= 1.
+      std::set<int> se;
+      for(auto other: one.as_good_as(two)) {
+        se.insert(vars_lr[one.id()][other]);
+      }
+      for(auto other: two.as_good_as(one)) {
+        se.insert(vars_lr[other][two.id()]);
+      }
+      for (int var : se) ss << "1 x" << var << " ";
+      ss << ">= 1;" << std::endl;
+    }
+  }
+  std::stringstream start;
+  start << "* #variable= " << (_one_vars.size() + _two_vars.size()) << " #constraint= 0";
+  // npSolver needs at least one more comment line. I don't know why, but
+  // deleting it makes npSolver crash.
+  start << std::endl << "* silly comment" << std::endl;
+  for (auto & one: _ones) {
+    int pref_length = 1;
+    for(auto & pref: one.prefs()) {
+      start << "* " << one.id() << " with " << pref << " is " <<_one_vars[std::make_tuple(one.id(), pref_length)] << std::endl;
+      pref_length++;
+    }
+    start << "* " << one.id() << " unassigned is " <<_one_vars[std::make_tuple(one.id(), pref_length)] << std::endl;
+  }
+  for (auto & two: _twos) {
+    int pref_length = 1;
+    for(auto & pref: two.prefs()) {
+      start << "* " << pref << " with " << two.id() << " is " <<_two_vars[std::make_tuple(two.id(), pref_length)] << std::endl;
+      pref_length++;
+    }
+    start << "* " << two.id() << " unassigned is " <<_two_vars[std::make_tuple(two.id(), pref_length)] << std::endl;
+  }
+  start << "min:";
+  for (auto & one : _ones) start << " 1 x" << dummy_l[one.id()];
+  for (auto & two : _twos) start << " 1 x" << dummy_r[two.id()];
   start << " ;" << std::endl;
   start << ss.str();
   return start.str();
