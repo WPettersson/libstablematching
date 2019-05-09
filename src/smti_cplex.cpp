@@ -19,7 +19,9 @@ double SMTI::solve_cplex(bool optimise) {
       if (vars_rl.count(two_id) == 0) {
         vars_rl.emplace(two_id, std::map<int, IloBoolVar*>());
       }
-      IloBoolVar *var = new IloBoolVar(env);
+      std::stringstream name;
+      name << "x" << one.id() << "_" << two.id();
+      IloBoolVar *var = new IloBoolVar(env, name.str().c_str());
       everything.add(*var);
       vars_lr[one.id()][two_id] = var;
       vars_rl[two_id][one.id()] = var;
@@ -34,10 +36,16 @@ double SMTI::solve_cplex(bool optimise) {
     for(int two_id: one.prefs()) {
       capacity.add(*vars_lr[one.id()][two_id]);
     }
+    std::stringstream name;
+    name << "cap_one_" << one.id();
     if (optimise) {
-      model.add(IloSum(capacity) <= 1);
+      IloConstraint c(IloSum(capacity) <= 1);
+      c.setName(name.str().c_str());
+      model.add(c);
     } else {
-      model.add(IloSum(capacity) == 1);
+      IloConstraint c(IloSum(capacity) == 1);
+      c.setName(name.str().c_str());
+      model.add(c);
     }
   }
   // Twos capacity
@@ -49,7 +57,11 @@ double SMTI::solve_cplex(bool optimise) {
     for(int one_id: two.prefs()) {
       capacity.add(*vars_lr[one_id][two.id()]);
     }
-    model.add(IloSum(capacity) <= 1);
+    std::stringstream name;
+    name << "cap_two_" << two.id();
+    IloConstraint c(IloSum(capacity) <= 1);
+    c.setName(name.str().c_str());
+    model.add(c);
   }
   // Stability constraints
   for(auto & one: _ones) {
@@ -63,7 +75,11 @@ double SMTI::solve_cplex(bool optimise) {
       for(auto other: two.as_good_as(one)) {
         second_sum.add(*vars_lr[other][two.id()]);
       }
-      model.add(1 - IloSum(first_sum) <= IloSum(second_sum));
+      std::stringstream name;
+      name << "stab_" << one.id() << "_" << two.id();
+      IloConstraint c(1 - IloSum(first_sum) <= IloSum(second_sum));
+      c.setName(name.str().c_str());
+      model.add(c);
     }
   }
   model.add(IloMaximize(env, IloSum(everything)));
@@ -73,6 +89,7 @@ double SMTI::solve_cplex(bool optimise) {
   problem.setParam(IloCplex::Threads, 1);
   // Hide CPLEX output
   problem.setOut(env.getNullStream());
+  problem.exportModel("test.lp");
   problem.solve();
   return problem.getObjValue();
 }
