@@ -21,4 +21,6 @@ ADD_EXECUTABLE(convert convert.cpp)
 TARGET_LINK_LIBRARIES(convert smti)
 ADD_EXECUTABLE(pbo pbo.cpp)
 TARGET_LINK_LIBRARIES(pbo smti)
+ADD_EXECUTABLE(pbo_convert pbo_convert.cpp)
+TARGET_LINK_LIBRARIES(pbo_convert smti)
 
