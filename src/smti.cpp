@@ -94,7 +94,7 @@ SMTI::SMTI(std::string filename) : _num_dummies(0) {
       if (need_capacity) {
         // We just pulled in the capacity, which is hopefully 1, but we ignore
         // it.
-        expect_capacity = false;
+        need_capacity = false;
         continue;
       }
       if ((token.front() == '[') || (token.front() == '(')) {
