@@ -9,7 +9,11 @@ int main(int argc, char *argv[]) {
   //int seed = 24601;
   //std::mt19937 g(seed);
   std::random_device rd;
-  std::mt19937 g(rd());
+  unsigned int seed = rd();
+  if (argc == 6) {
+    seed = atoi(argv[5]);
+  }
+  std::mt19937 g(seed);
   SMTI instance(atoi(argv[1]), atoi(argv[2]), atof(argv[3]), g);
   std::string fname(argv[4]);
   std::ofstream humanfile(fname + ".instance");
@@ -22,7 +26,8 @@ int main(int argc, char *argv[]) {
   wcnffile2 << instance.encodePBO2();
   wcnffile2.close();
 #ifdef CPLEX_FOUND
-  std::cout << "CPLEX found " << instance.solve_cplex() << std::endl;
+  double size = instance.solve_cplex();
+  std::cout << "CPLEX found " << size << " expect objective " << (2*(atoi(argv[1]) - size)) << std::endl;
 #endif
   return 0;
 }
