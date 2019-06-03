@@ -77,7 +77,7 @@ SMTI::SMTI(std::string filename) : _num_dummies(0) {
     }
     _ones.emplace_back(id, preferences);
   }
-  for(int i = 0; i < _size; ++i) {
+  for(int i = 0; i < second_size; ++i) {
     int id;
     getline(infile, line);
     std::stringstream prefstream(line);
