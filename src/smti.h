@@ -6,6 +6,18 @@
 #include <string>
 #include <unordered_map>
 
+#ifdef CPLEX_FOUND
+// CPLEX Include
+#include <ilcplex/ilocplex.h>
+// CPLEX Needs this before using STL things
+ILOSTLBEGIN
+
+// The type for our variable storage.
+#include <map>
+typedef std::map<int, std::map<int, IloBoolVar*>> VarMap;
+
+#endif
+
 #include "Agent.h"
 
 
@@ -19,6 +31,8 @@ namespace std {
     }
   };
 } // namespace std
+
+
 
 
 class SMTI {
@@ -75,7 +89,7 @@ class SMTI {
     /**
      * Create a pseudo-boolean optimisation encoding of the instance, with a PB-solver-friendly encoding.
      */
-    std::string encodePBO2();
+    std::string encodePBO2(bool merged=false);
 
     /**
      * Create a Minizinc constraint programming encoding of the instance.
@@ -93,9 +107,25 @@ class SMTI {
      * :param optimise: If false, create a COM-SMTI instance which requires
      * everyone to be in a matching. Note that this assumes that the number of
      * agents on either side is equal, it does not do this check for you.
+     * :param merged: Should we use merged stability constraints?
      * :return: The number of matchings in the optimal solution.
      */
-    double solve_cplex(bool optimise=true);
+    double solve_cplex(bool optimise=true, bool merged=false);
+
+    /**
+     * Adds stability constraints to the model. One constraints is generated
+     * for each possibly matched pair.
+     */
+    void cplex_add_single_constraints(IloEnv * env, IloModel * model,
+                                      const VarMap &lr, const VarMap &rl);
+
+    /**
+     * Adds merged stability constraints. See Section 6.1 of
+     * https://doi.org/10.1016/j.ejor.2019.03.017
+     */
+    void cplex_add_merged_constraints(IloEnv * env, IloModel * model,
+                                      const VarMap &lr, const VarMap &rl);
+
 #endif
 
     /**

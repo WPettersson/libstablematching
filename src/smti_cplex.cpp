@@ -3,12 +3,84 @@ ILOSTLBEGIN
 
 #include "smti.h"
 
+void SMTI::cplex_add_single_constraints(IloEnv *env, IloModel *model,
+    const VarMap &vars_lr, const VarMap &vars_rl) {
+  // Single stability constraints
+  for(auto & one: _ones) {
+    for(int two_id: one.prefs()) {
+      Agent &two = _twos[two_id - 1];
+      IloNumVarArray first_sum(*env);
+      for(auto other: one.as_good_as(two)) {
+        first_sum.add(*vars_lr.at(one.id()).at(other));
+      }
+      IloNumVarArray second_sum(*env);
+      for(auto other: two.as_good_as(one)) {
+        second_sum.add(*vars_lr.at(other).at(two.id()));
+      }
+      std::stringstream name;
+      name << "stab_" << one.id() << "_" << two.id();
+      IloConstraint c(1 - IloSum(first_sum) <= IloSum(second_sum));
+      c.setName(name.str().c_str());
+      model->add(c);
+    }
+  }
+}
 
-double SMTI::solve_cplex(bool optimise) {
+void SMTI::cplex_add_merged_constraints(IloEnv *env, IloModel *model,
+    const VarMap &vars_lr, const VarMap &vars_rl) {
+
+  // For a two.id(), and an index into two's preference groups,
+  // better_than[two.id()][index] is an Ilo array of all variables
+  // corresponding to matches "at least as good as" any in the given group of
+  // twos preferences.
+  std::vector<std::vector<IloNumVarArray>> better_than;
+
+  for(const auto &two: _twos) {
+    // Create each empty set of arrays.
+    better_than.emplace_back();
+    for(int i = 0; i < two.preferences().size(); ++i) {
+      better_than[better_than.size() - 1].emplace_back(*env);
+    }
+  }
+
+  // Fill the better_than array
+  for(const auto & one: _ones) {
+    for(std::vector<signed int> tie: one.preferences()) {
+      for(auto pref: tie) {
+        int rank = _twos[pref - 1].rank_of(one.id());
+        for(int l = rank; l <= _twos[pref - 1].preferences().size(); ++l) {
+          better_than[pref - 1][l - 1].add(*vars_lr.at(one.id()).at(pref));
+        }
+      }
+    }
+  }
+
+  for(auto & one: _ones) {
+    int group = 0;
+    IloNumVarArray left_side(*env);
+    for(const std::vector<signed int> & tie: one.preferences()) {
+      IloNumVarArray right_side(*env);
+      for(signed int pref: tie) {
+        left_side.add(*vars_lr.at(one.id()).at(pref));
+        int rank = _twos[pref - 1].rank_of(one.id());
+        right_side.add(better_than[pref - 1][rank - 1]);
+      }
+      IloConstraint c(tie.size() * (1 - IloSum(left_side)) <= IloSum(right_side));
+      std::stringstream name;
+      name << "stab_" << one.id() << "_" << group;
+      c.setName(name.str().c_str());
+      model->add(c);
+      group++;
+    }
+  }
+}
+
+
+double SMTI::solve_cplex(bool optimise, bool merged) {
   IloEnv env;
   IloModel model(env);
-  std::map<int, std::map<int, IloBoolVar*>> vars_lr;
-  std::map<int, std::map<int, IloBoolVar*>> vars_rl;
+  VarMap vars_lr;
+  VarMap vars_rl;
   IloNumVarArray everything(env);
   for(auto & one: _ones) {
     for(int two_id: one.prefs()) {
@@ -63,24 +135,10 @@ double SMTI::solve_cplex(bool optimise) {
     c.setName(name.str().c_str());
     model.add(c);
   }
-  // Stability constraints
-  for(auto & one: _ones) {
-    for(int two_id: one.prefs()) {
-      Agent &two = _twos[two_id - 1];
-      IloNumVarArray first_sum(env);
-      for(auto other: one.as_good_as(two)) {
-        first_sum.add(*vars_lr[one.id()][other]);
-      }
-      IloNumVarArray second_sum(env);
-      for(auto other: two.as_good_as(one)) {
-        second_sum.add(*vars_lr[other][two.id()]);
-      }
-      std::stringstream name;
-      name << "stab_" << one.id() << "_" << two.id();
-      IloConstraint c(1 - IloSum(first_sum) <= IloSum(second_sum));
-      c.setName(name.str().c_str());
-      model.add(c);
-    }
+  if (!merged) {
+    cplex_add_single_constraints(&env, &model, vars_lr, vars_rl);
+  } else {
+    cplex_add_merged_constraints(&env, &model, vars_lr, vars_rl);
   }
   model.add(IloMaximize(env, IloSum(everything)));
   IloCplex problem(model);
