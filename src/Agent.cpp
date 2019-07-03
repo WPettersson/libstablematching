@@ -96,6 +96,10 @@ int Agent::rank_of(const Agent & agent) const {
   return _ranks.at(agent.id());
 }
 
+int Agent::rank_of(int id) const {
+  return _ranks.at(id);
+}
+
 std::vector<int> Agent::as_good_as(const Agent & agent) const {
   return as_good_as(agent.id());
 }
@@ -168,6 +172,10 @@ signed int Agent::position_of_next_worst(const Agent & agent) const {
 
 const std::vector<int> Agent::prefs() const {
   return this->_preferencesInOrder;
+}
+
+const std::vector<std::vector<signed int>> Agent::preferences() const {
+  return this->_preferences;
 }
 
 std::string Agent::pref_list_string() const {
