@@ -582,7 +582,7 @@ std::string SMTI::encodePBO() {
   return start.str();
 }
 
-std::string SMTI::encodePBO2() {
+std::string SMTI::encodePBO2(bool merged) {
   make_var_map();
   std::stringstream ss;
   std::map<int, std::map<int, int>> vars_lr;
@@ -624,20 +624,73 @@ std::string SMTI::encodePBO2() {
     ss << " = 1;" << std::endl;
   }
   // Stability constraints
-  for(auto & one: _ones) {
-    for(int two_id: one.prefs()) {
-      Agent &two = _twos[two_id - 1];
-      // 1 - first_sum <= second_sum
-      // first_sum + second_sum >= 1.
-      std::set<int> se;
-      for(auto other: one.as_good_as(two)) {
-        se.insert(vars_lr[one.id()][other]);
+  if (!merged) {
+    for(auto & one: _ones) {
+      for(int two_id: one.prefs()) {
+        Agent &two = _twos[two_id - 1];
+        // 1 - first_sum <= second_sum
+        // first_sum + second_sum >= 1.
+        std::set<int> se;
+        for(auto other: one.as_good_as(two)) {
+          se.insert(vars_lr[one.id()][other]);
+        }
+        for(auto other: two.as_good_as(one)) {
+          se.insert(vars_lr[other][two.id()]);
+        }
+        for (int var : se) ss << "1 x" << var << " ";
+        ss << ">= 1;" << std::endl;
       }
-      for(auto other: two.as_good_as(one)) {
-        se.insert(vars_lr[other][two.id()]);
+    }
+  } else {
+    // For a two.id(), and an index into two's preference groups,
+    // better_than[two.id()][index] is an Ilo array of all variables
+    // corresponding to matches "at least as good as" any in the given group of
+    // twos preferences.
+    std::vector<std::vector<std::vector<int>>> better_than;
+
+    for(const auto &two: _twos) {
+      // Create each empty set of arrays.
+      better_than.emplace_back();
+      for(size_t i = 0; i < two.preferences().size(); ++i) {
+        better_than[better_than.size() - 1].emplace_back();
       }
-      for (int var : se) ss << "1 x" << var << " ";
-      ss << ">= 1;" << std::endl;
+    }
+
+    // Fill the better_than array
+    for(const auto & one: _ones) {
+      for(const std::vector<signed int> & tie: one.preferences()) {
+        for(auto pref: tie) {
+          int rank = _twos[pref - 1].rank_of(one.id());
+          for(size_t l = rank; l <= _twos[pref - 1].preferences().size(); ++l) {
+            better_than[pref - 1][l - 1].push_back(vars_lr.at(one.id()).at(pref));
+          }
+        }
+      }
+    }
+
+    for(auto & one: _ones) {
+      int group = 0;
+      std::vector<int> left_side;
+      for(const std::vector<signed int> & tie: one.preferences()) {
+        std::vector<int> right_side;
+        for(signed int pref: tie) {
+          left_side.push_back(vars_lr.at(one.id()).at(pref));
+          int rank = _twos[pref - 1].rank_of(one.id());
+          for(auto & thing: better_than[pref - 1][rank - 1]) {
+            right_side.push_back(thing);
+          }
+        }
+        // tie.size() <= right_side + tie.size() * left_side
+        // right_side + tie.size() * left_side >= tie.size()
+        for(auto var : right_side) {
+          ss << "1 x" << var << " ";
+        }
+        for(auto var : left_side) {
+          ss << tie.size() << " x" << var << " ";
+        }
+        ss << " >= " << tie.size() << ";" << std::endl;
+        group++;
+      }
     }
   }
   // Redundant constraints
