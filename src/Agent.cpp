@@ -106,7 +106,7 @@ std::vector<int> Agent::as_good_as(const Agent & agent) const {
 
 std::vector<int> Agent::as_good_as(int id) const {
   std::vector<int> res;
-  for (auto group: _preferences) {
+  for (const auto & group: _preferences) {
     bool found_here = false;
     for (auto pref: group) {
       res.push_back(pref);
