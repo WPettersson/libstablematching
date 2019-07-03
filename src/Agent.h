@@ -51,6 +51,7 @@ class Agent {
      * Return the rank of the given agent according to this agent.
      */
     int rank_of(const Agent & agent) const;
+    int rank_of(int id) const;
 
     /**
      * Adds all IDs between the given values (inclusive) as dummy agents. All
@@ -89,6 +90,11 @@ class Agent {
      * preferred than prefs()[i+1]
      */
     const std::vector<int> prefs() const;
+
+    /**
+     * Returns the preferences as groups, where agents in each group are tied.
+     */
+    const std::vector<std::vector<signed int>> preferences() const;
 
     /**
      * Returns the list of agents which are at least as good as the given
