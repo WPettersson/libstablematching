@@ -25,9 +25,14 @@ int main(int argc, char *argv[]) {
   std::ofstream wcnffile2(fname + "-v2.pbo");
   wcnffile2 << instance.encodePBO2();
   wcnffile2.close();
+  std::ofstream wcnffile3(fname + "-v3.pbo");
+  wcnffile3 << instance.encodePBO2(true);
+  wcnffile3.close();
 #ifdef CPLEX_FOUND
-  double size = instance.solve_cplex();
-  std::cout << "CPLEX found " << size << " expect objective " << (2*(atoi(argv[1]) - size)) << std::endl;
+  double size = instance.solve_cplex(true, false);
+  std::cout << "unmerged found " << size << " expect objective " << (2*(atoi(argv[1]) - size)) << std::endl;
+  size = instance.solve_cplex(true, true);
+  std::cout << "merged found " << size << " expect objective " << (2*(atoi(argv[1]) - size)) << std::endl;
 #endif
   return 0;
 }

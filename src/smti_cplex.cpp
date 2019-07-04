@@ -150,6 +150,6 @@ double SMTI::solve_cplex(bool optimise, bool merged) {
   problem.exportModel("test.lp");
   double start_time = problem.getCplexTime();
   problem.solve();
-  std::cout << "CPLEX took " << (problem.getCplexTime() - start_time) << std::endl;
+  std::cout << (merged ? "merged" : "unmerged") << " took " << (problem.getCplexTime() - start_time) << std::endl;
   return problem.getObjValue();
 }
