@@ -583,6 +583,7 @@ std::string SMTI::encodePBO() {
 }
 
 std::string SMTI::encodePBO2(bool merged) {
+  int cons = 0;
   make_var_map();
   std::stringstream ss;
   std::map<int, std::map<int, int>> vars_lr;
@@ -614,6 +615,7 @@ std::string SMTI::encodePBO2(bool merged) {
     }
     ss << "1 x" << dummy_l[one.id()] << " ";
     ss << " = 1;" << std::endl;
+    cons++;
   }
   // Twos capacity
   for(auto & two: _twos) {
@@ -622,6 +624,7 @@ std::string SMTI::encodePBO2(bool merged) {
     }
     ss << "1 x" << dummy_r[two.id()] << " ";
     ss << " = 1;" << std::endl;
+    cons++;
   }
   // Stability constraints
   if (!merged) {
@@ -639,6 +642,7 @@ std::string SMTI::encodePBO2(bool merged) {
         }
         for (int var : se) ss << "1 x" << var << " ";
         ss << ">= 1;" << std::endl;
+        cons++;
       }
     }
   } else {
@@ -689,6 +693,7 @@ std::string SMTI::encodePBO2(bool merged) {
           ss << tie.size() << " x" << var << " ";
         }
         ss << " >= " << tie.size() << ";" << std::endl;
+        cons++;
         group++;
       }
     }
@@ -698,8 +703,9 @@ std::string SMTI::encodePBO2(bool merged) {
   for(auto & one : _ones) ss << "1 x" << dummy_l[one.id()] << " ";
   for(auto & two : _twos) ss << "-1 x" << dummy_r[two.id()] << " ";
   ss << "= " << _ones.size() - _twos.size() << ";" << std::endl;
+  cons++;
   std::stringstream start;
-  start << "* #variable= " << (_one_vars.size() + _two_vars.size()) << " #constraint= 0";
+  start << "* #variable= " << (_one_vars.size() + _two_vars.size()) << " #constraint= " << cons;
   // npSolver needs at least one more comment line. I don't know why, but
   // deleting it makes npSolver crash.
   start << std::endl << "* silly comment" << std::endl;
