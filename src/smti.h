@@ -133,6 +133,16 @@ class SMTI {
      */
     void solve() const;
 
+    /**
+     * Return the agents on the left (the ones)
+     */
+    std::vector<Agent>::const_iterator left_agents() const;
+
+    /**
+     * Return the agents on the right (the twos)
+     */
+    std::vector<Agent>::const_iterator right_agents() const;
+
   private:
     /**
      * Create the maps from IDs/positions in preference lists to variable

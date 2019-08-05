@@ -122,6 +122,13 @@ SMTI::SMTI(std::string filename) : _num_dummies(0) {
   }
 }
 
+std::vector<Agent>::const_iterator SMTI::left_agents() const {
+  return _ones.cbegin();
+}
+
+std::vector<Agent>::const_iterator SMTI::right_agents() const {
+  return _twos.cbegin();
+}
 
 void SMTI::add_dummy(int num_dummy) {
   // Create the preferences of each dummy.
