@@ -594,7 +594,6 @@ std::string SMTI::encodePBO2(bool merged) {
   int nvars = 0;
   for(auto & one: _ones) {
     for(int two_id: one.prefs()) {
-      Agent & two = _twos[two_id-1];
       if (vars_lr.count(one.id()) == 0) {
         vars_lr.emplace(one.id(), std::map<int, int>());
       }
@@ -611,7 +610,7 @@ std::string SMTI::encodePBO2(bool merged) {
   // Ones capacity
   for(auto & one: _ones) {
     for(int two_id: one.prefs()) {
-	  ss << "1 x" << vars_lr[one.id()][two_id] << " ";
+    ss << "1 x" << vars_lr[one.id()][two_id] << " ";
     }
     ss << "1 x" << dummy_l[one.id()] << " ";
     ss << " = 1;" << std::endl;
@@ -620,7 +619,7 @@ std::string SMTI::encodePBO2(bool merged) {
   // Twos capacity
   for(auto & two: _twos) {
     for(int one_id: two.prefs()) {
-	  ss << "1 x" << vars_lr[one_id][two.id()] << " ";
+    ss << "1 x" << vars_lr[one_id][two.id()] << " ";
     }
     ss << "1 x" << dummy_r[two.id()] << " ";
     ss << " = 1;" << std::endl;
@@ -674,23 +673,37 @@ std::string SMTI::encodePBO2(bool merged) {
 
     for(auto & one: _ones) {
       int group = 0;
-      std::vector<int> left_side;
+      std::set<int> left_side;
       for(const std::vector<signed int> & tie: one.preferences()) {
-        std::vector<int> right_side;
+        std::set<int> right_side;
         for(signed int pref: tie) {
-          left_side.push_back(vars_lr.at(one.id()).at(pref));
+          left_side.insert(vars_lr.at(one.id()).at(pref));
           int rank = _twos[pref - 1].rank_of(one.id());
           for(auto & thing: better_than[pref - 1][rank - 1]) {
-            right_side.push_back(thing);
+            right_side.insert(thing);
           }
         }
         // tie.size() <= right_side + tie.size() * left_side
         // right_side + tie.size() * left_side >= tie.size()
+
+        // so if a variable is in the right, but not the left, it has
+        // coefficient one
         for(auto var : right_side) {
-          ss << "1 x" << var << " ";
+          if (left_side.find(var) == left_side.end()) {
+            ss << "1 x" << var << " ";
+          }
         }
+
+        // If a variable is in the left
         for(auto var : left_side) {
-          ss << tie.size() << " x" << var << " ";
+          // and not in the right, it has coefficient tie.size()j
+          if (right_side.find(var) == right_side.end()) {
+            ss << tie.size() << " x" << var << " ";
+          } else {
+              // And if it's in both left and right, it has
+              // coefficient = tie.size() + 1
+            ss << (tie.size() + 1) << " x" << var << " ";
+          }
         }
         ss << " >= " << tie.size() << ";" << std::endl;
         cons++;
