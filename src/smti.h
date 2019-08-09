@@ -136,12 +136,12 @@ class SMTI {
     /**
      * Return the agents on the left (the ones)
      */
-    std::vector<Agent>::const_iterator left_agents() const;
+    std::vector<Agent> left_agents() const;
 
     /**
      * Return the agents on the right (the twos)
      */
-    std::vector<Agent>::const_iterator right_agents() const;
+    std::vector<Agent> right_agents() const;
 
   private:
     /**
