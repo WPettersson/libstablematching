@@ -75,6 +75,16 @@ class SMTI {
     int agents_right() const { return _twos.size(); } ;
 
     /**
+     * Return a given agent.
+     */
+    const Agent agent_left(int id) const { return _ones.at(id); } ;
+
+    /**
+     * Return a given agent.
+     */
+    const Agent agent_right(int id) const { return _twos.at(id); } ;
+
+    /**
      * Adds dummy variables to the instance.  We add num_dummy agents to either
      * side, and each dummy finds every agent of the other side equally
      * preferable. In other words, in an instance with N regular agents per
