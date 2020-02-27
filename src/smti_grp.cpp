@@ -24,10 +24,8 @@ SMTI SMTI::create_from_GRP(std::string filename, int threshold) {
         break;
       }
       float score = std::stof(token);
-      if (score > threshold) {
-        row_agents[row].push_back(std::make_pair(col, score));
-        col_agents[col].push_back(std::make_pair(row, score));
-      }
+      row_agents[row].push_back(std::make_pair(col, score));
+      col_agents[col].push_back(std::make_pair(row, score));
       col += 1;
     }
   }
@@ -39,12 +37,12 @@ SMTI SMTI::create_from_GRP(std::string filename, int threshold) {
               [](const std::pair<int, float> & a, const std::pair<int, float> & b) { return a.second > b.second; });
     std::vector<int> indices;
     std::vector<std::vector<int>> preferences;
-    for(auto & pair: row_agents[row]) {
-      preferences.emplace_back(1, pair.first);
-    }
     std::vector<int> this_pref;
     float last_score = row_agents[row].front().second;
     for(auto & pair: row_agents[row]) {
+      if (pair.second < threshold) {
+        break;
+      }
       if (last_score != pair.second) {
         preferences.push_back(std::move(this_pref));
         this_pref = std::vector<int>();
@@ -68,6 +66,9 @@ SMTI SMTI::create_from_GRP(std::string filename, int threshold) {
     std::vector<int> this_pref;
     float last_score = col_agents[col].front().second;
     for(auto & pair: col_agents[col]) {
+      if (pair.second < threshold) {
+        break;
+      }
       if (last_score != pair.second) {
         preferences.push_back(std::move(this_pref));
         this_pref = std::vector<int>();
