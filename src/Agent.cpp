@@ -69,13 +69,13 @@ Agent::Agent(int id, const std::vector<int> & partners, float tie_density, std::
   _preferences.push_back(std::move(tie));
 }
 
-Agent::Agent(int id, std::vector<std::vector<int>> preferences, bool is_dummy) : _id(id), _dummy_rank(-1) {
+Agent::Agent(int id, const std::vector<std::vector<int>> & preferences, bool is_dummy) : _id(id), _dummy_rank(-1) {
   _ranks = std::map<int, int>();
   _first_at_this_rank = std::map<int, int>();
   _max_rank = 0;
   for(std::vector<int> group: preferences) {
     _max_rank += 1;
-    std::vector<int> new_group = group;
+    std::vector<int> new_group(group);
     _preferences.push_back(new_group);
     _first_at_this_rank[_max_rank] = group.at(0);
     for(auto pref: group) {

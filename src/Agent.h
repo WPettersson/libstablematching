@@ -18,7 +18,7 @@ class Agent {
      * param preferences a vector of tie-groups of actual preferences
      * param is_fummy true iff this agent is to just be a dummy
      */
-    Agent(int id, std::vector<std::vector<int>> preferences, bool is_dummy = false);
+    Agent(int id, const std::vector<std::vector<int>> & preferences, bool is_dummy = false);
 
     /**
      * Constructor using random number generator
