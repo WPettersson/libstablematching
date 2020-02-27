@@ -54,6 +54,16 @@ class SMTI {
     std::string to_string() const;
 
     /**
+     * Return the number of agents on the left.
+     */
+    int agents_left() const { return _ones.size(); } ;
+
+    /**
+     * Return the number of agents on the right.
+     */
+    int agents_right() const { return _twos.size(); } ;
+
+    /**
      * Adds dummy variables to the instance.  We add num_dummy agents to either
      * side, and each dummy finds every agent of the other side equally
      * preferable. In other words, in an instance with N regular agents per
