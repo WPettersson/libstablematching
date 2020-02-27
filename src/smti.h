@@ -49,6 +49,17 @@ class SMTI {
     SMTI(int size, int pref_length, float tie_density, std::mt19937 & generator);
 
     /**
+     * Construct an instance given two sets of preference lists.
+     */
+    SMTI(const std::vector<std::vector<std::vector<int>>> & ones, const std::vector<std::vector<std::vector<int>>> & twos);
+
+    /**
+     * Construct an instance from a file containing scores of Globally Ranked Pairs.
+     * param threshold Assume any scores below this threshold
+     */
+    static SMTI create_from_GRP(std::string filename, int threshold=0);
+
+    /**
      * Return a string representation of this instance.
      */
     std::string to_string() const;

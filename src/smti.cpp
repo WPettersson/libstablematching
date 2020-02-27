@@ -122,6 +122,16 @@ SMTI::SMTI(std::string filename) : _num_dummies(0) {
   }
 }
 
+SMTI::SMTI(const std::vector<std::vector<std::vector<int>>> & ones, const std::vector<std::vector<std::vector<int>>> & twos) :
+  _ones(), _twos() {
+  _size = ones.size();
+  for (int id = 0; id < ones.size(); ++id) {
+    _ones.emplace_back(id, ones.at(id));
+  }
+  for (int id = 0; id < twos.size(); ++id) {
+    _twos.emplace_back(id, twos[id]);
+  }
+}
 
 void SMTI::add_dummy(int num_dummy) {
   // Create the preferences of each dummy.

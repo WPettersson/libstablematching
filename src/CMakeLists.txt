@@ -2,6 +2,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 SET(SOURCES
   Agent.cpp
   smti.cpp
+  smti_grp.cpp
   )
 
 IF(CPLEX_FOUND)
