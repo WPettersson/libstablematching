@@ -42,16 +42,16 @@ SMTI SMTI::create_from_GRP(std::string filename, int threshold) {
     std::vector<std::vector<int>> preferences;
     std::vector<int> this_pref;
     float last_score = row_agents[row].front().second;
-    for(auto & pair: row_agents[row]) {
-      if (pair.second < threshold) {
+    for(auto & [pref, score]: row_agents[row]) {
+      if (score < threshold) {
         break;
       }
-      if (last_score != pair.second) {
+      if (last_score != score) {
         preferences.push_back(std::move(this_pref));
         this_pref = std::vector<int>();
       }
-      this_pref.push_back(pair.first);
-      last_score = pair.second;
+      this_pref.push_back(pref);
+      last_score = score;
     }
     if (! this_pref.empty()) {
         preferences.push_back(std::move(this_pref));
@@ -68,16 +68,16 @@ SMTI SMTI::create_from_GRP(std::string filename, int threshold) {
     std::vector<std::vector<int>> preferences;
     std::vector<int> this_pref;
     float last_score = col_agents[col].front().second;
-    for(auto & pair: col_agents[col]) {
-      if (pair.second < threshold) {
+    for(auto & [pref, score]: col_agents[col]) {
+      if (score < threshold) {
         break;
       }
-      if (last_score != pair.second) {
+      if (last_score != score) {
         preferences.push_back(std::move(this_pref));
         this_pref = std::vector<int>();
       }
-      this_pref.push_back(pair.first);
-      last_score = pair.second;
+      this_pref.push_back(pref);
+      last_score = score;
     }
     if (! this_pref.empty()) {
         preferences.push_back(std::move(this_pref));

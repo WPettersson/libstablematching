@@ -6,10 +6,9 @@ ILOSTLBEGIN
 void SMTI::cplex_add_single_constraints(IloEnv *env, IloModel *model,
     const VarMap &vars_lr, const VarMap &vars_rl) {
   // Single stability constraints
-  for(auto & pair: _ones) {
-    auto & one = pair.second;
+  for(auto & [key, one]: _ones) {
     for(int two_id: one.prefs()) {
-      Agent &two = _twos[two_id - 1];
+      Agent & two = _twos.at(two_id);
       IloNumVarArray first_sum(*env);
       for(auto other: one.as_good_as(two)) {
         first_sum.add(*vars_lr.at(one.id()).at(other));
@@ -36,8 +35,7 @@ void SMTI::cplex_add_merged_constraints(IloEnv *env, IloModel *model,
   // twos preferences.
   std::vector<std::vector<IloNumVarArray>> better_than;
 
-  for(const auto & pair: _twos) {
-    auto & two = pair.second;
+  for(const auto & [key, two]: _twos) {
     // Create each empty set of arrays.
     better_than.emplace_back();
     for(int i = 0; i < two.preferences().size(); ++i) {
@@ -46,8 +44,7 @@ void SMTI::cplex_add_merged_constraints(IloEnv *env, IloModel *model,
   }
 
   // Fill the better_than array
-  for(const auto & pair: _ones) {
-    auto & one = pair.second;
+  for(const auto & [key, one]: _ones) {
     for(std::vector<signed int> tie: one.preferences()) {
       for(auto pref: tie) {
         int rank = _twos[pref].rank_of(one.id());
@@ -58,8 +55,7 @@ void SMTI::cplex_add_merged_constraints(IloEnv *env, IloModel *model,
     }
   }
 
-  for(auto & pair: _ones) {
-    auto & one = pair.second;
+  for(auto & [key, one]: _ones) {
     int group = 0;
     IloNumVarArray left_side(*env);
     for(const std::vector<signed int> & tie: one.preferences()) {
@@ -86,8 +82,7 @@ double SMTI::solve_cplex(bool optimise, bool merged) {
   VarMap vars_lr;
   VarMap vars_rl;
   IloNumVarArray everything(env);
-  for(auto & pair: _ones) {
-    auto & one = pair.second;
+  for(auto & [key, one]: _ones) {
     for(int two_id: one.prefs()) {
       Agent & two = _twos[two_id];
       if (vars_lr.count(one.id()) == 0) {
@@ -105,8 +100,7 @@ double SMTI::solve_cplex(bool optimise, bool merged) {
     }
   }
   // Ones capacity
-  for(auto & pair: _ones) {
-    auto & one = pair.second;
+  for(auto & [key, one]: _ones) {
     if (one.prefs().size() == 0) {
       continue;
     }
@@ -127,8 +121,7 @@ double SMTI::solve_cplex(bool optimise, bool merged) {
     }
   }
   // Twos capacity
-  for(auto & pair: _twos) {
-    auto & two = pair.second;
+  for(auto & [key, two]: _twos) {
     if (two.prefs().size() == 0) {
       continue;
     }

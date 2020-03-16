@@ -177,6 +177,7 @@ class SMTI {
     void solve() const;
 
   private:
+
     /**
      * Create the maps from IDs/positions in preference lists to variable
      * indices. Indices, and therefore variables, start at 1 in the land of

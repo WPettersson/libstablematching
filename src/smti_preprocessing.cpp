@@ -24,11 +24,10 @@ int single_reduction(std::unordered_map<int, Agent> & to_preprocess,
                      bool supp) {
   int num_removed = 0;
   bool new_always_allocated = false;
-  for (auto & pair : to_preprocess) {
-    auto & agent = pair.second;
+  for (auto & [key, agent]: to_preprocess) {
     Graph g;
     int n_1 = 0;
-    for (auto rank = 0; rank < agent.preferences().size(); ++rank) {
+    for (unsigned int rank = 0; rank < agent.preferences().size(); ++rank) {
       auto &pref_tie = agent.preference_group(rank);
       // No point in checking the last rank if we already know this agent must
       // be allocated, or if we don't care about P'
