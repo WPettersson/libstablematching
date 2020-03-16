@@ -41,7 +41,7 @@ SMTI::SMTI(std::string filename) : _num_dummies(0) {
   getline(infile, line);
   int second_size = std::stoi(line);
 
-  for(int i = 0; i < _size; ++i) {
+  for(int lineno = 0; lineno < _size; ++lineno) {
     int id;
     getline(infile, line);
     std::stringstream prefstream(line);
@@ -77,7 +77,7 @@ SMTI::SMTI(std::string filename) : _num_dummies(0) {
     }
     _ones.emplace(id, Agent(id, preferences));
   }
-  for(int i = 0; i < second_size; ++i) {
+  for(int lineno = 0; lineno < second_size; ++lineno) {
     int id;
     getline(infile, line);
     std::stringstream prefstream(line);
@@ -125,10 +125,10 @@ SMTI::SMTI(std::string filename) : _num_dummies(0) {
 SMTI::SMTI(const std::vector<std::vector<std::vector<int>>> & ones, const std::vector<std::vector<std::vector<int>>> & twos) :
   _ones(), _twos() {
   _size = ones.size();
-  for (int id = 0; id < ones.size(); ++id) {
+  for (unsigned int id = 0; id < ones.size(); ++id) {
     _ones.emplace(id, Agent(id, ones.at(id)));
   }
-  for (int id = 0; id < twos.size(); ++id) {
+  for (unsigned int id = 0; id < twos.size(); ++id) {
     _twos.emplace(id, Agent(id, twos[id]));
   }
 }

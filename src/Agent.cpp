@@ -149,7 +149,7 @@ void Agent::remove_dummies(int id) {
 }
 
 signed int Agent::position_of_next_worst(const Agent & agent) const {
-  int next_rank = 1 + this->rank_of(agent);
+  unsigned int next_rank = 1 + this->rank_of(agent);
   if (next_rank > this->_max_rank) {
     return _preferencesInOrder.size() + 1;
   }
@@ -173,14 +173,14 @@ const std::vector<signed int> Agent::preference_group(int rank) const {
   return this->_preferences[rank];
 }
 
-std::list<signed int> Agent::remove_after(int rank) {
+std::list<signed int> Agent::remove_after(unsigned int rank) {
   std::list<signed int> removed;
   // if rank >= (max_rank - 1), do nothing
-  if (rank >= (_max_rank - 1)) {
+  if ((rank + 1) >= _max_rank) {
     return removed;
   }
   // Remove in _preferencesInOrder, if there is something to remove
-  int next_rank = rank + 1;
+  unsigned int next_rank = rank + 1;
   // Find next to remove
   while (next_rank < this->_preferences.size()) {
     // If the next rank is empty, look further
@@ -196,7 +196,7 @@ std::list<signed int> Agent::remove_after(int rank) {
     break;
   }
   // Clear out _ranks
-  for(int now = rank + 1; now < this->_preferences.size(); ++now) {
+  for(unsigned int now = rank + 1; now < this->_preferences.size(); ++now) {
     for(auto ident: _preferences[now]) {
       _ranks.erase(ident);
       removed.push_back(ident);

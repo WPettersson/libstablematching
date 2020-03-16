@@ -113,7 +113,7 @@ class Agent {
      * Remove any preferences after the given rank (not including the given
      * rank). Return the list of agent IDs of those agents that were removed.
      */
-    std::list<signed int> remove_after(int rank);
+    std::list<signed int> remove_after(unsigned int rank);
 
     /**
      * Removes a given option from the preference list.
@@ -128,7 +128,7 @@ class Agent {
 
   private:
     int _id;
-    int _max_rank;
+    unsigned int _max_rank;
 
     signed int _dummy_rank;
     std::vector<std::vector<signed int>> _preferences;
