@@ -62,7 +62,7 @@ class SMTI {
     /**
      * Return a string representation of this instance.
      */
-    std::string to_string() const;
+    std::string to_string(std::string id_sep = ":", std::string bracket_start = "[", std::string bracket_end = "]") const;
 
     /**
      * Return the number of agents on the left.

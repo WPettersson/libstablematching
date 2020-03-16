@@ -783,15 +783,15 @@ void SMTI::make_var_map() {
   }
 }
 
-std::string SMTI::to_string() const {
+std::string SMTI::to_string(std::string id_sep, std::string bracket_start, std::string bracket_end) const {
   std::stringstream ss;
   ss << _ones.size() << std::endl;
-  ss << _ones.size() << std::endl;
+  ss << _twos.size() << std::endl;
   for(auto & one: _ones) {
-    ss << one.pref_list_string() << std::endl;
+    ss << one.pref_list_string(id_sep, bracket_start, bracket_end) << std::endl;
   }
   for(auto & two: _twos) {
-    ss << two.pref_list_string() << std::endl;
+    ss << two.pref_list_string(id_sep, bracket_start, bracket_end) << std::endl;
   }
   return ss.str();
 }

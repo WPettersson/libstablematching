@@ -2,9 +2,10 @@
 #define AGENT_H
 
 #include <algorithm>
+#include <list>
+#include <map>
 #include <random>
 #include <string>
-#include <map>
 #include <vector>
 
 class Agent {
@@ -94,7 +95,12 @@ class Agent {
     /**
      * Returns the preferences as groups, where agents in each group are tied.
      */
-    const std::vector<std::vector<signed int>> preferences() const;
+    const std::vector<std::vector<signed int>> & preferences() const;
+
+    /**
+     * Returns a given tied group of preferences, as a list of Agents.
+     */
+    const std::vector<signed int> preference_group(int rank) const;
 
     /**
      * Returns the list of agents which are at least as good as the given
@@ -104,9 +110,21 @@ class Agent {
     std::vector<int> as_good_as(const Agent & agent) const;
 
     /**
+     * Remove any preferences after the given rank (not including the given
+     * rank). Return the list of agent IDs of those agents that were removed.
+     */
+    std::list<signed int> remove_after(int rank);
+
+    /**
+     * Removes a given option from the preference list.
+     */
+    void remove_preference(int ident);
+    void remove_preference(const Agent & other);
+
+    /**
      * Returns a string showing this agents preferences.
      */
-    std::string pref_list_string() const;
+    std::string pref_list_string(std::string id_sep = ":", std::string bracket_start = "[", std::string bracket_end = "]") const;
 
   private:
     int _id;
@@ -116,7 +134,6 @@ class Agent {
     std::vector<std::vector<signed int>> _preferences;
     std::vector<signed int> _preferencesInOrder;
     std::map<int, int> _ranks;
-    std::map<int, int> _first_at_this_rank;
 
 };
 

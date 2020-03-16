@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <sstream>
 
 #include "Agent.h"
@@ -12,8 +11,7 @@ Agent::Agent(int id, int pref_length, float tie_density,
               pref_length, generator);
   std::vector<int> tie = std::vector<int>();
   _ranks = std::map<int, int>();
-  _first_at_this_rank = std::map<int, int>();
-  _max_rank = 1;
+  _max_rank = 0;
 
   // Our distribution
   std::uniform_real_distribution<float> distribution(0, 1);
@@ -25,10 +23,6 @@ Agent::Agent(int id, int pref_length, float tie_density,
       _max_rank += 1;
     }
     _ranks[i] = _max_rank;
-    auto found = _first_at_this_rank.find(_max_rank);
-    if (found == _first_at_this_rank.end()) {
-      _first_at_this_rank[_max_rank] = i;
-    }
     tie.push_back(i);
   }
   // Last tie group
@@ -38,8 +32,7 @@ Agent::Agent(int id, int pref_length, float tie_density,
 Agent::Agent(int id, const std::vector<int> & partners, float tie_density, std::mt19937 & generator) :
   _id(id), _dummy_rank(-1) {
   _ranks = std::map<int, int>();
-  _first_at_this_rank = std::map<int, int>();
-  _max_rank = 1;
+  _max_rank = 0;
 
   if (partners.empty()) {
     return;
@@ -59,10 +52,6 @@ Agent::Agent(int id, const std::vector<int> & partners, float tie_density, std::
       _max_rank += 1;
     }
     _ranks[i] = _max_rank;
-    auto found = _first_at_this_rank.find(_max_rank);
-    if (found == _first_at_this_rank.end()) {
-      _first_at_this_rank[_max_rank] = i;
-    }
     tie.push_back(i);
   }
   // Last tie group
@@ -71,17 +60,15 @@ Agent::Agent(int id, const std::vector<int> & partners, float tie_density, std::
 
 Agent::Agent(int id, const std::vector<std::vector<int>> & preferences, bool is_dummy) : _id(id), _dummy_rank(-1) {
   _ranks = std::map<int, int>();
-  _first_at_this_rank = std::map<int, int>();
   _max_rank = 0;
   for(std::vector<int> group: preferences) {
-    _max_rank += 1;
     std::vector<int> new_group(group);
     _preferences.push_back(new_group);
-    _first_at_this_rank[_max_rank] = group.at(0);
     for(auto pref: group) {
       _preferencesInOrder.push_back(pref);
       _ranks[pref] = _max_rank;
     }
+    _max_rank += 1;
   }
   if (is_dummy) {
     _dummy_rank = 0;
@@ -141,7 +128,6 @@ void Agent::add_dummy_pref_up_to(int start, int end) {
     _preferences.emplace_back(std::vector<int>());
     _dummy_rank = _preferences.size() - 1;
     _max_rank += 1;
-    _first_at_this_rank[_max_rank] = start;
   }
   for(int i = start; i <= end; ++i) {
     _preferences[_dummy_rank].push_back(i);
@@ -167,34 +153,99 @@ signed int Agent::position_of_next_worst(const Agent & agent) const {
   if (next_rank > this->_max_rank) {
     return _preferencesInOrder.size() + 1;
   }
-  return this->position_of(_first_at_this_rank.at(next_rank));
+  while (next_rank < _preferences.size()) {
+    if (_preferences[next_rank].size() == 0)
+      continue;
+    return this->position_of(_preferences[next_rank][0]);
+  }
+  return _preferencesInOrder.size() + 1;
 }
 
 const std::vector<int> Agent::prefs() const {
   return this->_preferencesInOrder;
 }
 
-const std::vector<std::vector<signed int>> Agent::preferences() const {
+const std::vector<std::vector<signed int>> & Agent::preferences() const {
   return this->_preferences;
 }
 
-std::string Agent::pref_list_string() const {
+const std::vector<signed int> Agent::preference_group(int rank) const {
+  return this->_preferences[rank];
+}
+
+std::list<signed int> Agent::remove_after(int rank) {
+  std::list<signed int> removed;
+  // if rank >= (max_rank - 1), do nothing
+  if (rank >= (_max_rank - 1)) {
+    return removed;
+  }
+  // Remove in _preferencesInOrder, if there is something to remove
+  int next_rank = rank + 1;
+  // Find next to remove
+  while (next_rank < this->_preferences.size()) {
+    // If the next rank is empty, look further
+    if (this->_preferences[next_rank].size() == 0) {
+      next_rank += 1;
+      continue;
+    }
+    auto pos = std::find(_preferencesInOrder.begin(), _preferencesInOrder.end(),
+        this->_preferences[next_rank][0]);
+    if (pos != _preferencesInOrder.end()) {
+      _preferencesInOrder.erase(pos, _preferencesInOrder.end());
+    }
+    break;
+  }
+  // Clear out _ranks
+  for(int now = rank + 1; now < this->_preferences.size(); ++now) {
+    for(auto ident: _preferences[now]) {
+      _ranks.erase(ident);
+      removed.push_back(ident);
+    }
+  }
+  this->_preferences.erase(this->_preferences.begin() + rank + 1,
+                           this->_preferences.end());
+  this->_max_rank = rank;
+  return removed;
+}
+
+void Agent::remove_preference(int ident) {
+  for(auto & tie_group: _preferences) {
+    auto pos = std::find(tie_group.begin(), tie_group.end(), ident);
+    if (pos != tie_group.end()) {
+      tie_group.erase(pos);
+    }
+  }
+  auto pos = std::find(_preferencesInOrder.begin(), _preferencesInOrder.end(), ident);
+  if (pos != _preferencesInOrder.end()) {
+    _preferencesInOrder.erase(pos);
+  }
+  _ranks.erase(ident);
+}
+
+void Agent::remove_preference(const Agent & other) {
+  remove_preference(other.id());
+}
+
+std::string Agent::pref_list_string(std::string id_sep, std::string bracket_start, std::string bracket_end) const {
   std::stringstream ss;
-  ss << this->id() << ":";
+  ss << (this->id() + 1) << id_sep;
   for(auto pref_group: this->_preferences) {
+    if (pref_group.size() == 0) {
+      continue;
+    }
     if (pref_group.size() == 1) {
-      ss << " " << pref_group.at(0);
+      ss << " " << (pref_group.at(0) + 1);
     } else {
-      ss << " " << "[";
+      ss << " " << bracket_start;
       bool first = true;
       for (auto pref: pref_group) {
         if (!first) {
           ss << " ";
         }
         first = false;
-        ss << pref;
+        ss << (pref + 1);
       }
-      ss << "]";
+      ss << bracket_end;
     }
   }
   return ss.str();
