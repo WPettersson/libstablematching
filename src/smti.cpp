@@ -594,7 +594,6 @@ std::string SMTI::encodePBO() {
 
 std::string SMTI::encodePBO2(bool merged) {
   int cons = 0;
-  make_var_map();
   std::stringstream ss;
   std::map<int, std::map<int, int>> vars_lr;
   std::map<int, int> dummy_l;
@@ -746,25 +745,23 @@ std::string SMTI::encodePBO2(bool merged) {
   }
   cons++;
   std::stringstream start;
-  start << "* #variable= " << (_one_vars.size() + _two_vars.size()) << " #constraint= " << cons;
+  start << "* #variable= " << nvars << " #constraint= " << cons;
   // npSolver needs at least one more comment line. I don't know why, but
   // deleting it makes npSolver crash.
   start << std::endl << "* silly comment" << std::endl;
   for (auto & [key, one]: _ones) {
     int pref_length = 1;
     for(auto & pref: one.prefs()) {
-      start << "* " << one.id() << " with " << pref << " is " <<_one_vars[std::make_tuple(one.id(), pref_length)] << std::endl;
+      start << "* " << one.id() << " with " << pref << " is " << vars_lr.at(one.id()).at(pref) << std::endl;
       pref_length++;
     }
-    start << "* " << one.id() << " unassigned is " <<_one_vars[std::make_tuple(one.id(), pref_length)] << std::endl;
   }
   for (auto & [key, two]: _twos) {
     int pref_length = 1;
     for(auto & pref: two.prefs()) {
-      start << "* " << pref << " with " << two.id() << " is " <<_two_vars[std::make_tuple(two.id(), pref_length)] << std::endl;
+      start << "* " << pref << " with " << two.id() << " is " << vars_rl.at(two.id()).at(pref) << std::endl;
       pref_length++;
     }
-    start << "* " << two.id() << " unassigned is " <<_two_vars[std::make_tuple(two.id(), pref_length)] << std::endl;
   }
   start << "min:";
   for (auto & [key, one]: _ones) {
