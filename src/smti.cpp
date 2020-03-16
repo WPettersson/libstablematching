@@ -15,13 +15,13 @@ SMTI::SMTI(int size, int pref_length, float tie_density, std::mt19937 & generato
 
   std::vector<std::vector<int>> two_prefs(size+1);
   for(int i = 1; i <= size; ++i) {
-    _ones.emplace_back(Agent(i, pref_length, tie_density, generator));
-    for(auto pref: _ones.back().prefs()) {
+    _ones.emplace(i, Agent(i, pref_length, tie_density, generator));
+    for(auto pref: _ones.at(i).prefs()) {
       two_prefs[pref].push_back(i);
     }
   }
   for(int i = 1; i <= size; ++i) {
-    _twos.emplace_back(Agent(i, two_prefs[i], tie_density, generator));
+    _twos.emplace(i, Agent(i, two_prefs[i], tie_density, generator));
   }
 }
 
@@ -75,7 +75,7 @@ SMTI::SMTI(std::string filename) : _num_dummies(0) {
         preferences.push_back(std::move(here));
       }
     }
-    _ones.emplace_back(id, preferences);
+    _ones.emplace(id, Agent(id, preferences));
   }
   for(int i = 0; i < second_size; ++i) {
     int id;
@@ -118,7 +118,7 @@ SMTI::SMTI(std::string filename) : _num_dummies(0) {
         preferences.push_back(std::move(here));
       }
     }
-    _twos.emplace_back(id, preferences);
+    _twos.emplace(id, Agent(id, preferences));
   }
 }
 
@@ -126,10 +126,10 @@ SMTI::SMTI(const std::vector<std::vector<std::vector<int>>> & ones, const std::v
   _ones(), _twos() {
   _size = ones.size();
   for (int id = 0; id < ones.size(); ++id) {
-    _ones.emplace_back(id, ones.at(id));
+    _ones.emplace(id, Agent(id, ones.at(id)));
   }
   for (int id = 0; id < twos.size(); ++id) {
-    _twos.emplace_back(id, twos[id]);
+    _twos.emplace(id, Agent(id, twos[id]));
   }
 }
 
@@ -144,15 +144,17 @@ void SMTI::add_dummy(int num_dummy) {
 
   // Create and add the actual dummy agents
   for(int i = 1; i <= num_dummy; ++i) {
-    _ones.emplace_back(Agent(_size + i, prefs, true));
-    _twos.emplace_back(Agent(_size + i, prefs, true));
+    _ones.emplace(_size + i, Agent(_size + i, prefs, true));
+    _twos.emplace(_size + i, Agent(_size + i, prefs, true));
   }
 
   // Add the dummies as compatible to all existing agents.
-  for(auto & one: _ones) {
+  for(auto & pair: _ones) {
+    auto & one = pair.second;
     one.add_dummy_pref_up_to(_size + 1, _size + num_dummy);
   }
-  for(auto & two: _twos) {
+  for(auto & pair: _twos) {
+    auto & two = pair.second;
     two.add_dummy_pref_up_to(_size + 1, _size + num_dummy);
   }
   _size += num_dummy;
@@ -162,14 +164,16 @@ void SMTI::add_dummy(int num_dummy) {
 void SMTI::remove_dummy(int num_dummy) {
   // Remove the dummies.
   for(int i = 0; i < num_dummy; ++i) {
-    _ones.pop_back();
-    _twos.pop_back();
+    _ones.erase(_size - i);
+    _twos.erase(_size - i);
   }
   // Remove them as preference options.
-  for(auto & one: _ones) {
+  for(auto & pair: _ones) {
+    auto & one = pair.second;
     one.remove_dummies(num_dummy);
   }
-  for(auto & two: _twos) {
+  for(auto & pair: _twos) {
+    auto & two = pair.second;
     two.remove_dummies(num_dummy);
   }
   _size -= num_dummy;
@@ -181,7 +185,8 @@ std::string SMTI::encodeSAT() {
   std::stringstream ss;
   int num_clauses = 0;
   // Clause 1
-  for (auto & one: _ones) {
+  for (auto & pair: _ones) {
+    auto & one = pair.second;
     ss << _one_vars[std::make_tuple(one.id(), 1)] << " 0" << std::endl;
     num_clauses++;
     ss << "-" << _one_vars[std::make_tuple(one.id(), one.num_prefs() + 1)] <<
@@ -189,7 +194,8 @@ std::string SMTI::encodeSAT() {
     num_clauses++;
   }
   // Clause 2
-  for (auto & two: _twos) {
+  for (auto & pair: _twos) {
+    auto & two = pair.second;
     ss << _two_vars[std::make_tuple(two.id(), 1)] << " 0" << std::endl;
     num_clauses++;
     ss << "-" << _two_vars[std::make_tuple(two.id(), two.num_prefs() + 1)] <<
@@ -197,7 +203,8 @@ std::string SMTI::encodeSAT() {
     num_clauses++;
   }
   // Clause 3
-  for (auto & one: _ones) {
+  for (auto & pair: _ones) {
+    auto & one = pair.second;
     for (size_t i = 1; i <= one.prefs().size(); ++i) {
       ss << _one_vars[std::make_tuple(one.id(), i)] << " -" <<
            (_one_vars[std::make_tuple(one.id(), i)]+1) << " 0" << std::endl;
@@ -205,16 +212,18 @@ std::string SMTI::encodeSAT() {
     }
   }
   // Clause 4
-  for (auto & two: _twos) {
+  for (auto & pair: _twos) {
+    auto & two = pair.second;
     for (size_t i = 1; i <= two.prefs().size(); ++i) {
       ss << _two_vars[std::make_tuple(two.id(), i)] << " -" <<
            (_two_vars[std::make_tuple(two.id(), i)]+1) << " 0" << std::endl;
       num_clauses++;
     }
   }
-  for (auto & one: _ones) {
+  for (auto & pair: _ones) {
+    auto & one = pair.second;
     for (auto two_id: one.prefs()) {
-      Agent &two = _twos[two_id - 1];
+      Agent &two = _twos.at(two_id);
       int p = one.position_of(two);
       if (p == -1) {
         continue;
@@ -268,8 +277,10 @@ std::string SMTI::encodeSAT() {
 std::string SMTI::encodeMZN(bool optimise) {
   std::stringstream ss;
   std::vector<std::string> vars;
-  for(auto & one: _ones) {
-    for(auto & two: _twos) {
+  for(auto & pair: _ones) {
+    auto & one = pair.second;
+    for(auto & ppair: _twos) {
+      auto & two = ppair.second;
       if (one.is_compatible(two)) {
         std::string name = "x" + std::to_string(one.id()) + "_" + std::to_string(two.id());
         ss << "var 0..1: " << name << ";" << std::endl;
@@ -279,7 +290,8 @@ std::string SMTI::encodeMZN(bool optimise) {
   }
 
   // Ones capacity
-  for(auto & one: _ones) {
+  for(auto & pair: _ones) {
+    auto & one = pair.second;
     if (one.prefs().size() == 0) {
       continue;
     }
@@ -299,7 +311,8 @@ std::string SMTI::encodeMZN(bool optimise) {
     }
   }
   // Twos capacity
-  for(auto & two: _twos) {
+  for(auto & pair: _twos) {
+    auto & two = pair.second;
     if (two.prefs().size() == 0) {
       continue;
     }
@@ -315,9 +328,10 @@ std::string SMTI::encodeMZN(bool optimise) {
     ss << " <= 1;" << std::endl;
   }
   // Stability constraints
-  for(auto & one: _ones) {
+  for(auto & pair: _ones) {
+    auto & one = pair.second;
     for(int two_id: one.prefs()) {
-      Agent &two = _twos[two_id - 1];
+      Agent & two = _twos.at(two_id);
       ss << "constraint 1 - (";
       bool first = true;
       for(auto other: one.as_good_as(two)) {
@@ -385,7 +399,8 @@ std::string SMTI::encodeWPMaxSAT() {
   int num_clauses = 0;
   int top_weight = 500;
   // Clause 1
-  for (auto & one: _ones) {
+  for (auto & pair: _ones) {
+    auto & one = pair.second;
     ss << top_weight << " ";
     ss << _one_vars[std::make_tuple(one.id(), 1)] << " 0" << std::endl;
     num_clauses++;
@@ -395,7 +410,8 @@ std::string SMTI::encodeWPMaxSAT() {
     num_clauses++;
   }
   // Clause 2
-  for (auto & two: _twos) {
+  for (auto & pair: _twos) {
+    auto & two = pair.second;
     ss << top_weight << " ";
     ss << _two_vars[std::make_tuple(two.id(), 1)] << " 0" << std::endl;
     num_clauses++;
@@ -405,7 +421,8 @@ std::string SMTI::encodeWPMaxSAT() {
     num_clauses++;
   }
   // Clause 3
-  for (auto & one: _ones) {
+  for (auto & pair: _ones) {
+    auto & one = pair.second;
     for (size_t i = 1; i <= one.prefs().size(); ++i) {
       ss << top_weight << " ";
       ss << _one_vars[std::make_tuple(one.id(), i)] << " -" <<
@@ -414,7 +431,8 @@ std::string SMTI::encodeWPMaxSAT() {
     }
   }
   // Clause 4
-  for (auto & two: _twos) {
+  for (auto & pair: _twos) {
+    auto & two = pair.second;
     for (size_t i = 1; i <= two.prefs().size(); ++i) {
       ss << top_weight << " ";
       ss << _two_vars[std::make_tuple(two.id(), i)] << " -" <<
@@ -422,9 +440,10 @@ std::string SMTI::encodeWPMaxSAT() {
       num_clauses++;
     }
   }
-  for (auto & one: _ones) {
+  for (auto & pair: _ones) {
+    auto & one = pair.second;
     for (auto two_id: one.prefs()) {
-      Agent &two = _twos[two_id - 1];
+      Agent &two = _twos.at(two_id);
       int p = one.position_of(two);
       if (p == -1) {
         continue;
@@ -487,17 +506,20 @@ std::string SMTI::encodePBO() {
   std::stringstream ss;
   int num_clauses = 0;
   // Clause 1
-  for (auto & one: _ones) {
+  for (auto & pair: _ones) {
+    auto & one = pair.second;
     ss << "1 x" << _one_vars[std::make_tuple(one.id(), 1)] << " = 1;" << std::endl;
     num_clauses++;
   }
   // Clause 2
-  for (auto & two: _twos) {
+  for (auto & pair: _twos) {
+    auto & two = pair.second;
     ss << "1 x" << _two_vars[std::make_tuple(two.id(), 1)] << " = 1;" << std::endl;
     num_clauses++;
   }
   // Clause 3
-  for (auto & one: _ones) {
+  for (auto & pair: _ones) {
+    auto & one = pair.second;
     for (size_t i = 1; i <= one.prefs().size(); ++i) {
       ss << "1 x" << _one_vars[std::make_tuple(one.id(), i)] << " 1 ~x" <<
             (_one_vars[std::make_tuple(one.id(), i)]+1) << " >= 1;" << std::endl;
@@ -505,16 +527,18 @@ std::string SMTI::encodePBO() {
     }
   }
   // Clause 4
-  for (auto & two: _twos) {
+  for (auto & pair: _twos) {
+    auto & two = pair.second;
     for (size_t i = 1; i <= two.prefs().size(); ++i) {
       ss << "1 x" << _two_vars[std::make_tuple(two.id(), i)] << " 1 ~x" <<
             (_two_vars[std::make_tuple(two.id(), i)]+1) << " >= 1;" << std::endl;
       num_clauses++;
     }
   }
-  for (auto & one: _ones) {
+  for (auto & pair: _ones) {
+    auto & one = pair.second;
     for (auto two_id: one.prefs()) {
-      Agent &two = _twos[two_id - 1];
+      Agent &two = _twos.at(two_id);
       int p = one.position_of(two);
       if (p == -1) {
         continue;
@@ -564,7 +588,8 @@ std::string SMTI::encodePBO() {
   // npSolver needs at least one more comment line. I don't know why, but
   // deleting it makes npSolver crash.
   start << std::endl << "* silly comment" << std::endl;
-  for (auto & one: _ones) {
+  for (auto & pair: _ones) {
+    auto & one = pair.second;
     int pref_length = 1;
     for(auto & pref: one.prefs()) {
       start << "* " << one.id() << " with " << pref << " is " <<_one_vars[std::make_tuple(one.id(), pref_length)] << std::endl;
@@ -572,7 +597,8 @@ std::string SMTI::encodePBO() {
     }
     start << "* " << one.id() << " unassigned is " <<_one_vars[std::make_tuple(one.id(), pref_length)] << std::endl;
   }
-  for (auto & two: _twos) {
+  for (auto & pair: _twos) {
+    auto & two = pair.second;
     int pref_length = 1;
     for(auto & pref: two.prefs()) {
       start << "* " << pref << " with " << two.id() << " is " <<_two_vars[std::make_tuple(two.id(), pref_length)] << std::endl;
@@ -581,10 +607,12 @@ std::string SMTI::encodePBO() {
     start << "* " << two.id() << " unassigned is " <<_two_vars[std::make_tuple(two.id(), pref_length)] << std::endl;
   }
   start << "min:";
-  for (auto & one: _ones) {
+  for (auto & pair: _ones) {
+    auto & one = pair.second;
     start << " 1 x" << _one_vars[std::make_tuple(one.id(), one.num_prefs() + 1)];
   }
-  for (auto & two: _twos) {
+  for (auto & pair: _twos) {
+    auto & two = pair.second;
     start << " 1 x" << _two_vars[std::make_tuple(two.id(), two.num_prefs() + 1)];
   }
   start << " ;" << std::endl;
@@ -602,7 +630,8 @@ std::string SMTI::encodePBO2(bool merged) {
   std::map<int, int> dummy_r;
   std::vector<int> everything;
   int nvars = 0;
-  for(auto & one: _ones) {
+  for(auto & pair: _ones) {
+    auto & one = pair.second;
     for(int two_id: one.prefs()) {
       if (vars_lr.count(one.id()) == 0) {
         vars_lr.emplace(one.id(), std::map<int, int>());
@@ -615,10 +644,17 @@ std::string SMTI::encodePBO2(bool merged) {
       vars_rl[two_id][one.id()] = var;
     }
   }
-  for (auto & one : _ones) dummy_l[one.id()] = ++nvars;
-  for (auto & two : _twos) dummy_r[two.id()] = ++nvars;
+  for (auto & pair : _ones) {
+    auto & one = pair.second;
+    dummy_l[one.id()] = ++nvars;
+  }
+  for (auto & pair: _twos) {
+    auto & two = pair.second;
+    dummy_r[two.id()] = ++nvars;
+  }
   // Ones capacity
-  for(auto & one: _ones) {
+  for(auto & pair: _ones) {
+    auto & one = pair.second;
     for(int two_id: one.prefs()) {
     ss << "1 x" << vars_lr[one.id()][two_id] << " ";
     }
@@ -627,7 +663,8 @@ std::string SMTI::encodePBO2(bool merged) {
     cons++;
   }
   // Twos capacity
-  for(auto & two: _twos) {
+  for(auto & pair: _twos) {
+    auto & two = pair.second;
     for(int one_id: two.prefs()) {
     ss << "1 x" << vars_lr[one_id][two.id()] << " ";
     }
@@ -637,9 +674,10 @@ std::string SMTI::encodePBO2(bool merged) {
   }
   // Stability constraints
   if (!merged) {
-    for(auto & one: _ones) {
+    for(auto & pair: _ones) {
+      auto & one = pair.second;
       for(int two_id: one.prefs()) {
-        Agent &two = _twos[two_id - 1];
+        const Agent &two = agent_right(two_id);
         // 1 - first_sum <= second_sum
         // first_sum + second_sum >= 1.
         std::set<int> se;
@@ -661,7 +699,8 @@ std::string SMTI::encodePBO2(bool merged) {
     // twos preferences.
     std::vector<std::vector<std::vector<int>>> better_than;
 
-    for(const auto &two: _twos) {
+    for(const auto & pair: _twos) {
+      auto & two = pair.second;
       // Create each empty set of arrays.
       better_than.emplace_back();
       for(size_t i = 0; i < two.preferences().size(); ++i) {
@@ -670,25 +709,27 @@ std::string SMTI::encodePBO2(bool merged) {
     }
 
     // Fill the better_than array
-    for(const auto & one: _ones) {
+    for(const auto & pair: _ones) {
+      auto & one = pair.second;
       for(const std::vector<signed int> & tie: one.preferences()) {
         for(auto pref: tie) {
-          int rank = _twos[pref - 1].rank_of(one.id());
-          for(size_t l = rank; l <= _twos[pref - 1].preferences().size(); ++l) {
+          int rank = _twos.at(pref).rank_of(one.id());
+          for(size_t l = rank; l <= _twos.at(pref).preferences().size(); ++l) {
             better_than[pref - 1][l - 1].push_back(vars_lr.at(one.id()).at(pref));
           }
         }
       }
     }
 
-    for(auto & one: _ones) {
+    for(auto & pair: _ones) {
+      auto & one = pair.second;
       int group = 0;
       std::set<int> left_side;
       for(const std::vector<signed int> & tie: one.preferences()) {
         std::set<int> right_side;
         for(signed int pref: tie) {
           left_side.insert(vars_lr.at(one.id()).at(pref));
-          int rank = _twos[pref - 1].rank_of(one.id());
+          int rank = agent_right(pref).rank_of(one.id());
           for(auto & thing: better_than[pref - 1][rank - 1]) {
             right_side.insert(thing);
           }
@@ -723,16 +764,35 @@ std::string SMTI::encodePBO2(bool merged) {
   }
   // Redundant constraints
   // _ones.size() - sum(dummy_l) == _twos.size() - sum(dummy_r)
-  for(auto & one : _ones) ss << "1 x" << dummy_l[one.id()] << " ";
-  for(auto & two : _twos) ss << "-1 x" << dummy_r[two.id()] << " ";
-  ss << "= " << _ones.size() - _twos.size() << ";" << std::endl;
+  if (_ones.size() >= _twos.size()) {
+    for(auto & pair: _ones) {
+      auto & one = pair.second;
+      ss << "1 x" << dummy_l[one.id()] << " ";
+    }
+    for(auto & pair: _twos) {
+      auto & two = pair.second;
+      ss << "-1 x" << dummy_r[two.id()] << " ";
+    }
+    ss << "= " << _ones.size() - _twos.size() << ";" << std::endl;
+  } else {
+    for(auto & pair: _ones) {
+      auto & one = pair.second;
+      ss << "-1 x" << dummy_l[one.id()] << " ";
+    }
+    for(auto & pair: _twos) {
+      auto & two = pair.second;
+      ss << "1 x" << dummy_r[two.id()] << " ";
+    }
+    ss << "= " << _twos.size() - _ones.size() << ";" << std::endl;
+  }
   cons++;
   std::stringstream start;
   start << "* #variable= " << (_one_vars.size() + _two_vars.size()) << " #constraint= " << cons;
   // npSolver needs at least one more comment line. I don't know why, but
   // deleting it makes npSolver crash.
   start << std::endl << "* silly comment" << std::endl;
-  for (auto & one: _ones) {
+  for (auto & pair: _ones) {
+    auto & one = pair.second;
     int pref_length = 1;
     for(auto & pref: one.prefs()) {
       start << "* " << one.id() << " with " << pref << " is " <<_one_vars[std::make_tuple(one.id(), pref_length)] << std::endl;
@@ -740,7 +800,8 @@ std::string SMTI::encodePBO2(bool merged) {
     }
     start << "* " << one.id() << " unassigned is " <<_one_vars[std::make_tuple(one.id(), pref_length)] << std::endl;
   }
-  for (auto & two: _twos) {
+  for (auto & pair: _twos) {
+    auto & two = pair.second;
     int pref_length = 1;
     for(auto & pref: two.prefs()) {
       start << "* " << pref << " with " << two.id() << " is " <<_two_vars[std::make_tuple(two.id(), pref_length)] << std::endl;
@@ -749,8 +810,14 @@ std::string SMTI::encodePBO2(bool merged) {
     start << "* " << two.id() << " unassigned is " <<_two_vars[std::make_tuple(two.id(), pref_length)] << std::endl;
   }
   start << "min:";
-  for (auto & one : _ones) start << " 1 x" << dummy_l[one.id()];
-  for (auto & two : _twos) start << " 1 x" << dummy_r[two.id()];
+  for (auto & pair: _ones) {
+    auto & one = pair.second;
+    start << " 1 x" << dummy_l[one.id()];
+  }
+  for (auto & pair: _twos) {
+    auto & two = pair.second;
+    start << " 1 x" << dummy_r[two.id()];
+  }
   start << " ;" << std::endl;
   start << ss.str();
   return start.str();
@@ -761,7 +828,8 @@ void SMTI::make_var_map() {
   _one_vars = std::unordered_map<std::tuple<int,int>, int>();
   _two_vars = std::unordered_map<std::tuple<int,int>, int>();
   int counter = 1;
-  for(auto & one: _ones) {
+  for(auto & pair: _ones) {
+    auto & one = pair.second;
     int pref_length = 1;
     for(auto & pref: one.prefs()) {
       _one_vars[std::make_tuple(one.id(), pref_length)] = counter;
@@ -771,7 +839,8 @@ void SMTI::make_var_map() {
     _one_vars[std::make_tuple(one.id(), pref_length)] = counter;
     counter++;
   }
-  for(auto & two: _twos) {
+  for(auto & pair: _twos) {
+    auto & two = pair.second;
     int pref_length = 1;
     for(auto & pref: two.prefs()) {
       _two_vars[std::make_tuple(two.id(), pref_length)] = counter;
@@ -787,10 +856,12 @@ std::string SMTI::to_string(std::string id_sep, std::string bracket_start, std::
   std::stringstream ss;
   ss << _ones.size() << std::endl;
   ss << _twos.size() << std::endl;
-  for(auto & one: _ones) {
+  for(auto & pair: _ones) {
+    auto & one = pair.second;
     ss << one.pref_list_string(id_sep, bracket_start, bracket_end) << std::endl;
   }
-  for(auto & two: _twos) {
+  for(auto & pair: _twos) {
+    auto & two = pair.second;
     ss << two.pref_list_string(id_sep, bracket_start, bracket_end) << std::endl;
   }
   return ss.str();

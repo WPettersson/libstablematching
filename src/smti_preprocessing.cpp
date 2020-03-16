@@ -17,14 +17,15 @@ namespace {
    * no preferences were removed but a new agent was marked as "always
    * allocated".
    */
-int single_reduction(std::vector<Agent> & to_preprocess,
-                     std::vector<Agent> & other_side,
+int single_reduction(std::unordered_map<int, Agent> & to_preprocess,
+                     std::unordered_map<int, Agent> & other_side,
                      std::unordered_set<int> & these_always_allocated,
                      std::unordered_set<int> & other_always_allocated,
                      bool supp) {
   int num_removed = 0;
   bool new_always_allocated = false;
-  for (auto &agent : to_preprocess) {
+  for (auto & pair : to_preprocess) {
+    auto & agent = pair.second;
     Graph g;
     int n_1 = 0;
     for (auto rank = 0; rank < agent.preferences().size(); ++rank) {
@@ -39,7 +40,7 @@ int single_reduction(std::vector<Agent> & to_preprocess,
       for (size_t ind = 0; ind < pref_tie.size(); ind++) {
         int position = pref_tie[ind];
         g.addVertex(1, position);
-        Agent &other = other_side[position];
+        Agent &other = other_side.at(position);
         for (int l = 0; l <= other.rank_of(agent.id()); l++) {
           for (size_t k = 0; k < other.preferences()[l].size(); k++) {
             int other_cand = other.preference_group(l)[k];
@@ -73,10 +74,10 @@ int single_reduction(std::vector<Agent> & to_preprocess,
         // First add all positions that must be filled.
         for (int position : other_always_allocated) {
           // If position is acceptable to i, then skip it.
-          if (other_side[position].is_compatible(agent))
+          if (other_side.at(position).is_compatible(agent))
             continue;
           g.addVertex(1, position);
-          for (auto &group : other_side[position].preferences()) {
+          for (auto &group : other_side.at(position).preferences()) {
             for (auto candidate : group) {
               if (!g.containsVertex(0, candidate)) {
                 g.addVertex(0, candidate);
@@ -102,7 +103,7 @@ int single_reduction(std::vector<Agent> & to_preprocess,
         // Now remove entries from preference lists after this rank.
         auto removed = agent.remove_after(rank);
         for (auto other_id : removed) {
-          other_side[other_id].remove_preference(agent.id());
+          other_side.at(other_id).remove_preference(agent.id());
         }
         break;
       }

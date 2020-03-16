@@ -27,7 +27,7 @@ namespace std {
   template <>
   struct hash<std::tuple<int, int>> {
     size_t operator()(std::tuple<int, int> const& tt) const {
-      return std::get<0>(tt) * 500 + std::get<1>(tt);
+      return std::get<0>(tt) * 5000 + std::get<1>(tt);
     }
   };
 } // namespace std
@@ -186,8 +186,8 @@ class SMTI {
 
     int _size;
     int _num_dummies;
-    std::vector<Agent> _ones;
-    std::vector<Agent> _twos;
+    std::unordered_map<int, Agent> _ones;
+    std::unordered_map<int, Agent> _twos;
     std::unordered_map<std::tuple<int,int>, int> _one_vars;
     std::unordered_map<std::tuple<int,int>, int> _two_vars;
 

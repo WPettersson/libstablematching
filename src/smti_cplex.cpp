@@ -6,7 +6,8 @@ ILOSTLBEGIN
 void SMTI::cplex_add_single_constraints(IloEnv *env, IloModel *model,
     const VarMap &vars_lr, const VarMap &vars_rl) {
   // Single stability constraints
-  for(auto & one: _ones) {
+  for(auto & pair: _ones) {
+    auto & one = pair.second;
     for(int two_id: one.prefs()) {
       Agent &two = _twos[two_id - 1];
       IloNumVarArray first_sum(*env);
@@ -35,7 +36,8 @@ void SMTI::cplex_add_merged_constraints(IloEnv *env, IloModel *model,
   // twos preferences.
   std::vector<std::vector<IloNumVarArray>> better_than;
 
-  for(const auto &two: _twos) {
+  for(const auto & pair: _twos) {
+    auto & two = pair.second;
     // Create each empty set of arrays.
     better_than.emplace_back();
     for(int i = 0; i < two.preferences().size(); ++i) {
@@ -44,25 +46,27 @@ void SMTI::cplex_add_merged_constraints(IloEnv *env, IloModel *model,
   }
 
   // Fill the better_than array
-  for(const auto & one: _ones) {
+  for(const auto & pair: _ones) {
+    auto & one = pair.second;
     for(std::vector<signed int> tie: one.preferences()) {
       for(auto pref: tie) {
-        int rank = _twos[pref - 1].rank_of(one.id());
-        for(int l = rank; l <= _twos[pref - 1].preferences().size(); ++l) {
+        int rank = _twos[pref].rank_of(one.id());
+        for(int l = rank; l <= _twos[pref].preferences().size(); ++l) {
           better_than[pref - 1][l - 1].add(*vars_lr.at(one.id()).at(pref));
         }
       }
     }
   }
 
-  for(auto & one: _ones) {
+  for(auto & pair: _ones) {
+    auto & one = pair.second;
     int group = 0;
     IloNumVarArray left_side(*env);
     for(const std::vector<signed int> & tie: one.preferences()) {
       IloNumVarArray right_side(*env);
       for(signed int pref: tie) {
         left_side.add(*vars_lr.at(one.id()).at(pref));
-        int rank = _twos[pref - 1].rank_of(one.id());
+        int rank = _twos[pref].rank_of(one.id());
         right_side.add(better_than[pref - 1][rank - 1]);
       }
       IloConstraint c(tie.size() * (1 - IloSum(left_side)) <= IloSum(right_side));
@@ -82,9 +86,10 @@ double SMTI::solve_cplex(bool optimise, bool merged) {
   VarMap vars_lr;
   VarMap vars_rl;
   IloNumVarArray everything(env);
-  for(auto & one: _ones) {
+  for(auto & pair: _ones) {
+    auto & one = pair.second;
     for(int two_id: one.prefs()) {
-      Agent & two = _twos[two_id-1];
+      Agent & two = _twos[two_id];
       if (vars_lr.count(one.id()) == 0) {
         vars_lr.emplace(one.id(), std::map<int, IloBoolVar*>());
       }
@@ -100,7 +105,8 @@ double SMTI::solve_cplex(bool optimise, bool merged) {
     }
   }
   // Ones capacity
-  for(auto & one: _ones) {
+  for(auto & pair: _ones) {
+    auto & one = pair.second;
     if (one.prefs().size() == 0) {
       continue;
     }
@@ -121,7 +127,8 @@ double SMTI::solve_cplex(bool optimise, bool merged) {
     }
   }
   // Twos capacity
-  for(auto & two: _twos) {
+  for(auto & pair: _twos) {
+    auto & two = pair.second;
     if (two.prefs().size() == 0) {
       continue;
     }
