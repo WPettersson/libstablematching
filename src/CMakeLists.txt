@@ -2,6 +2,8 @@ SET(SOURCES
   Agent.cpp
   smti.cpp
   smti_grp.cpp
+  smti_preprocessing.cpp
+  Graph.cpp
   )
 
 IF(CPLEX_FOUND)
@@ -23,4 +25,6 @@ ADD_EXECUTABLE(pbo pbo.cpp)
 TARGET_LINK_LIBRARIES(pbo smti)
 ADD_EXECUTABLE(pbo_convert pbo_convert.cpp)
 TARGET_LINK_LIBRARIES(pbo_convert smti)
+ADD_EXECUTABLE(pp pp.cpp)
+TARGET_LINK_LIBRARIES(pp smti)
 

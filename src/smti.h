@@ -85,6 +85,18 @@ class SMTI {
     const Agent agent_right(int id) const { return _twos.at(id); } ;
 
     /**
+     * Modes for preprocessing.
+     * Quick: Graph based algorithm from TODO REF
+     * Complete: Graph based algorithm from TODO
+     */
+    enum PreprocessMode { Quick, Complete };
+
+    /**
+     * Perform the preprocessing according to the above mode.
+     */
+    void preprocess(PreprocessMode mode);
+
+    /**
      * Adds dummy variables to the instance.  We add num_dummy agents to either
      * side, and each dummy finds every agent of the other side equally
      * preferable. In other words, in an instance with N regular agents per
