@@ -1,3 +1,6 @@
+#include <fstream>
+#include <sstream>
+
 #include "smti.h"
 
 
