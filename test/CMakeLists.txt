@@ -3,6 +3,7 @@ SET(SOURCES
   main.cpp
   smti_grp.cpp
   smti_preprocess.cpp
+  smti_pbo.cpp
   )
 
 ADD_EXECUTABLE(tests ${SOURCES})

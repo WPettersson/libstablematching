@@ -662,23 +662,18 @@ std::string SMTI::encodePBO2(bool merged) {
     // better_than[two.id()][index] is an array of all variables
     // corresponding to matches "at least as good as" any in the given group of
     // twos preferences.
-    std::vector<std::vector<std::vector<int>>> better_than;
+    std::unordered_map<int, std::unordered_map<int, std::vector<int>>> better_than;
 
-    for(const auto & [key, two]: _twos) {
-      // Create each empty set of arrays.
-      better_than.emplace_back();
-      for(size_t i = 0; i < two.preferences().size(); ++i) {
-        better_than[better_than.size() - 1].emplace_back();
-      }
-    }
-
-    // Fill the better_than array
+    // Fill the better_than array. 
     for(const auto & [key, one]: _ones) {
       for(const std::vector<signed int> & tie: one.preferences()) {
         for(auto pref: tie) {
-          int rank = _twos.at(pref).rank_of(one.id());
-          for(size_t l = rank; l <= _twos.at(pref).preferences().size(); ++l) {
-            better_than[pref - 1][l - 1].push_back(vars_lr.at(one.id()).at(pref));
+          auto & two = _twos.at(pref);
+          int rank = two.rank_of(one.id());
+          for(size_t l = rank; l < two.preferences().size(); ++l) {
+            // vars_lr[one.id()][pref] is at least as good as [pref][l]
+            // Note pref is two.id(), l is a _one id.
+            better_than[pref][l].push_back(vars_lr.at(one.id()).at(pref));
           }
         }
       }
@@ -692,7 +687,7 @@ std::string SMTI::encodePBO2(bool merged) {
         for(signed int pref: tie) {
           left_side.insert(vars_lr.at(one.id()).at(pref));
           int rank = agent_right(pref).rank_of(one.id());
-          for(auto & thing: better_than[pref - 1][rank - 1]) {
+          for(auto & thing: better_than.at(pref).at(rank)) {
             right_side.insert(thing);
           }
         }
@@ -750,17 +745,13 @@ std::string SMTI::encodePBO2(bool merged) {
   // deleting it makes npSolver crash.
   start << std::endl << "* silly comment" << std::endl;
   for (auto & [key, one]: _ones) {
-    int pref_length = 1;
     for(auto & pref: one.prefs()) {
       start << "* " << one.id() << " with " << pref << " is " << vars_lr.at(one.id()).at(pref) << std::endl;
-      pref_length++;
     }
   }
   for (auto & [key, two]: _twos) {
-    int pref_length = 1;
     for(auto & pref: two.prefs()) {
       start << "* " << pref << " with " << two.id() << " is " << vars_rl.at(two.id()).at(pref) << std::endl;
-      pref_length++;
     }
   }
   start << "min:";
