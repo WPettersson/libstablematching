@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
   }
   SMTI instance(argv[1]);
   std::ofstream wcnffile2(argv[2]);
-  wcnffile2 << instance.encodePBO2();
+  wcnffile2 << instance.encodePBO2(true);
   wcnffile2.close();
   return 0;
 }

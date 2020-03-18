@@ -593,25 +593,30 @@ std::string SMTI::encodePBO() {
 }
 
 std::string SMTI::encodePBO2(bool merged) {
+  // Count number of constraints and variables
   int cons = 0;
-  std::stringstream ss;
-  std::map<int, std::map<int, int>> vars_lr;
-  std::map<int, int> dummy_l;
-  std::map<int, std::map<int, int>> vars_rl;
-  std::map<int, int> dummy_r;
-  std::vector<int> everything;
   int nvars = 0;
+
+  // We build the encoding in ss
+  std::stringstream ss;
+
+  // var_map[one.id()][two.id()] is the integer component of the variable that
+  // represents matching one and two.
+  std::map<int, std::map<int, int>> var_map;
+
+  // Dummy variables for being unassigned.
+  std::map<int, int> dummy_l;
+  std::map<int, int> dummy_r;
+
+  // one_filled_at_rank[one.id()][r] is the variable indicating whether
+  // one.id() has reached it's capacity (had an assignment) at rank r or
+  // better, and similar for two_filled_at_rank[two.id()][r]
+  std::unordered_map<int, std::unordered_map<int, int>> one_filled_at_rank;
+  std::unordered_map<int, std::unordered_map<int, int>> two_filled_at_rank;
   for(auto & [key, one]: _ones) {
     for(int two_id: one.prefs()) {
-      if (vars_lr.count(one.id()) == 0) {
-        vars_lr.emplace(one.id(), std::map<int, int>());
-      }
-      if (vars_rl.count(two_id) == 0) {
-        vars_rl.emplace(two_id, std::map<int, int>());
-      }
       int var = ++nvars;
-      vars_lr[one.id()][two_id] = var;
-      vars_rl[two_id][one.id()] = var;
+      var_map[one.id()][two_id] = var;
     }
   }
   for (auto & [key, one]: _ones) {
@@ -623,7 +628,7 @@ std::string SMTI::encodePBO2(bool merged) {
   // Ones capacity
   for(auto & [key, one]: _ones) {
     for(int two_id: one.prefs()) {
-      ss << "1 x" << vars_lr[one.id()][two_id] << " ";
+      ss << "1 x" << var_map[one.id()][two_id] << " ";
     }
     ss << "1 x" << dummy_l[one.id()] << " ";
     ss << " = 1;" << std::endl;
@@ -632,7 +637,7 @@ std::string SMTI::encodePBO2(bool merged) {
   // Twos capacity
   for(auto & [key, two]: _twos) {
     for(int one_id: two.prefs()) {
-      ss << "1 x" << vars_lr[one_id][two.id()] << " ";
+      ss << "1 x" << var_map[one_id][two.id()] << " ";
     }
     ss << "1 x" << dummy_r[two.id()] << " ";
     ss << " = 1;" << std::endl;
@@ -647,10 +652,10 @@ std::string SMTI::encodePBO2(bool merged) {
         // first_sum + second_sum >= 1.
         std::set<int> se;
         for(auto other: one.as_good_as(two)) {
-          se.insert(vars_lr[one.id()][other]);
+          se.insert(var_map[one.id()][other]);
         }
         for(auto other: two.as_good_as(one)) {
-          se.insert(vars_lr[other][two.id()]);
+          se.insert(var_map[other][two.id()]);
         }
         for (int var : se) ss << "1 x" << var << " ";
         ss << ">= 1;" << std::endl;
@@ -658,64 +663,86 @@ std::string SMTI::encodePBO2(bool merged) {
       }
     }
   } else {
+    // Merging constraints
+
     // For a two.id(), and an index into two's preference groups,
     // better_than[two.id()][index] is an array of all variables
     // corresponding to matches "at least as good as" any in the given group of
     // twos preferences.
     std::unordered_map<int, std::unordered_map<int, std::vector<int>>> better_than;
 
-    // Fill the better_than array. 
+    // Fill the better_than array.
     for(const auto & [key, one]: _ones) {
       for(const std::vector<signed int> & tie: one.preferences()) {
         for(auto pref: tie) {
           auto & two = _twos.at(pref);
           int rank = two.rank_of(one.id());
           for(size_t l = rank; l < two.preferences().size(); ++l) {
-            // vars_lr[one.id()][pref] is at least as good as [pref][l]
+            // var_map[one.id()][pref] is at least as good as [pref][l]
             // Note pref is two.id(), l is a _one id.
-            better_than[pref][l].push_back(vars_lr.at(one.id()).at(pref));
+            better_than[pref][l].push_back(var_map.at(one.id()).at(pref));
           }
         }
       }
     }
 
+
     for(auto & [key, one]: _ones) {
-      int group = 0;
-      std::set<int> left_side;
-      for(const std::vector<signed int> & tie: one.preferences()) {
-        std::set<int> right_side;
-        for(signed int pref: tie) {
-          left_side.insert(vars_lr.at(one.id()).at(pref));
-          int rank = agent_right(pref).rank_of(one.id());
-          for(auto & thing: better_than.at(pref).at(rank)) {
-            right_side.insert(thing);
+      for(unsigned int r = 0; r < one.preferences().size(); ++r) {
+        one_filled_at_rank[one.id()][r] = ++nvars;
+        // Make constraint that ensures these variables are accurate
+        if (r == 0) {
+          // Constraint 12 is slightly different
+          ss << "-1 x" << one_filled_at_rank[one.id()][r];
+          for (auto & pref: one.preferences()[r]) {
+            ss << " 1 x" << var_map[one.id()][pref];
           }
-        }
-        // tie.size() <= right_side + tie.size() * left_side
-        // right_side + tie.size() * left_side >= tie.size()
-
-        // so if a variable is in the right, but not the left, it has
-        // coefficient one
-        for(auto var : right_side) {
-          if (left_side.find(var) == left_side.end()) {
-            ss << "1 x" << var << " ";
+          ss << " = 0;" << std::endl;
+          cons++;
+        } else {
+          // Constraint 13, also allow for "better"
+          ss << "1 x" << one_filled_at_rank[one.id()][r-1] << " -1 x" << one_filled_at_rank[one.id()][r];
+          for (auto & pref: one.preferences()[r]) {
+            ss << " 1 x" << var_map[one.id()][pref];
           }
+          ss << " = 0;" << std::endl;
+          cons++;
         }
-
-        // If a variable is in the left
-        for(auto var : left_side) {
-          // and not in the right, it has coefficient tie.size()j
-          if (right_side.find(var) == right_side.end()) {
-            ss << tie.size() << " x" << var << " ";
-          } else {
-              // And if it's in both left and right, it has
-              // coefficient = tie.size() + 1
-            ss << (tie.size() + 1) << " x" << var << " ";
+      }
+    }
+    for(auto & [key, two]: _twos) {
+      for(unsigned int r = 0; r < two.preferences().size(); ++r) {
+        two_filled_at_rank[two.id()][r] = ++nvars;
+        // Make constraint that ensures these variables are accurate
+        if (r == 0) {
+          // Constraint 14 is slightly different
+          ss << "-1 x" << two_filled_at_rank[two.id()][r];
+          for (auto & pref: two.preferences()[r]) {
+            ss << " 1 x" << var_map[pref][two.id()];
           }
+          ss << " = 0;" << std::endl;
+          cons++;
+        } else {
+          // Constraint 15, also allow for "better"
+          ss << "1 x" << two_filled_at_rank[two.id()][r-1] << " -1 x" << two_filled_at_rank[two.id()][r];
+          for (auto & pref: two.preferences()[r]) {
+            ss << " 1 x" << var_map[pref][two.id()];
+          }
+          ss << " = 0;" << std::endl;
+          cons++;
         }
-        ss << " >= " << tie.size() << ";" << std::endl;
-        cons++;
-        group++;
+      }
+    }
+    // And now the actual stability constraints (16)
+    for(auto & [key, one]: _ones) {
+      for(unsigned int r = 0; r < one.preferences().size(); ++r) {
+        for(auto & pref : one.preferences()[r]) {
+          auto & two = _twos.at(pref);
+          ss << "1 x" << one_filled_at_rank[one.id()][r];
+          ss << " 1 x" << two_filled_at_rank[pref][two.rank_of(one)];
+          ss << " <= 1;" << std::endl;
+          cons++;
+        }
       }
     }
   }
@@ -746,12 +773,20 @@ std::string SMTI::encodePBO2(bool merged) {
   start << std::endl << "* silly comment" << std::endl;
   for (auto & [key, one]: _ones) {
     for(auto & pref: one.prefs()) {
-      start << "* " << one.id() << " with " << pref << " is " << vars_lr.at(one.id()).at(pref) << std::endl;
+      start << "* " << one.id() << " with " << pref << " is " << var_map.at(one.id()).at(pref) << std::endl;
     }
   }
-  for (auto & [key, two]: _twos) {
-    for(auto & pref: two.prefs()) {
-      start << "* " << pref << " with " << two.id() << " is " << vars_rl.at(two.id()).at(pref) << std::endl;
+  if (merged) {
+    // Write out the indicator variables
+    for(auto & [key, one]: _ones) {
+      for(unsigned int r = 0; r < one.preferences().size(); ++r) {
+        start << "* " << one.id() << " filled at " << r << " is " << one_filled_at_rank[one.id()][r] << std::endl;
+      }
+    }
+    for(auto & [key, two]: _twos) {
+      for(unsigned int r = 0; r < two.preferences().size(); ++r) {
+        start << "* " << two.id() << " filled at " << r << " is " << two_filled_at_rank[two.id()][r] << std::endl;
+      }
     }
   }
   start << "min:";
