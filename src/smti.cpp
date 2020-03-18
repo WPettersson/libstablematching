@@ -738,9 +738,9 @@ std::string SMTI::encodePBO2(bool merged) {
       for(unsigned int r = 0; r < one.preferences().size(); ++r) {
         for(auto & pref : one.preferences()[r]) {
           auto & two = _twos.at(pref);
-          ss << "-1 x" << one_filled_at_rank[one.id()][r];
-          ss << " -1 x" << two_filled_at_rank[pref][two.rank_of(one)];
-          ss << " >= -1;" << std::endl;
+          ss << "1 x" << one_filled_at_rank[one.id()][r];
+          ss << " 1 x" << two_filled_at_rank[pref][two.rank_of(one)];
+          ss << " >= 1;" << std::endl;
           cons++;
         }
       }
