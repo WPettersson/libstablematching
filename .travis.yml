@@ -3,3 +3,8 @@ compiler:
   - clang
   - gcc
 dist: bionic
+
+script:
+  - cmake .
+  - make
+  - make test
