@@ -38,7 +38,7 @@ void SMTI::cplex_add_merged_constraints(IloEnv *env, IloModel *model,
   for(const auto & [key, two]: _twos) {
     // Create each empty set of arrays.
     better_than.emplace_back();
-    for(int i = 0; i < two.preferences().size(); ++i) {
+    for(size_t i = 0; i < two.preferences().size(); ++i) {
       better_than[better_than.size() - 1].emplace_back(*env);
     }
   }
@@ -47,8 +47,8 @@ void SMTI::cplex_add_merged_constraints(IloEnv *env, IloModel *model,
   for(const auto & [key, one]: _ones) {
     for(std::vector<signed int> tie: one.preferences()) {
       for(auto pref: tie) {
-        int rank = _twos[pref].rank_of(one.id());
-        for(int l = rank; l <= _twos[pref].preferences().size(); ++l) {
+        int rank = _twos.at(pref).rank_of(one.id());
+        for(size_t l = rank; l <= _twos.at(pref).preferences().size(); ++l) {
           better_than[pref - 1][l - 1].add(*vars_lr.at(one.id()).at(pref));
         }
       }
@@ -62,7 +62,7 @@ void SMTI::cplex_add_merged_constraints(IloEnv *env, IloModel *model,
       IloNumVarArray right_side(*env);
       for(signed int pref: tie) {
         left_side.add(*vars_lr.at(one.id()).at(pref));
-        int rank = _twos[pref].rank_of(one.id());
+        int rank = _twos.at(pref).rank_of(one.id());
         right_side.add(better_than[pref - 1][rank - 1]);
       }
       IloConstraint c(tie.size() * (1 - IloSum(left_side)) <= IloSum(right_side));
@@ -84,7 +84,7 @@ double SMTI::solve_cplex(bool optimise, bool merged) {
   IloNumVarArray everything(env);
   for(auto & [key, one]: _ones) {
     for(int two_id: one.prefs()) {
-      Agent & two = _twos[two_id];
+      Agent & two = _twos.at(two_id);
       if (vars_lr.count(one.id()) == 0) {
         vars_lr.emplace(one.id(), std::map<int, IloBoolVar*>());
       }
