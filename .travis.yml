@@ -1,10 +1,25 @@
 language: cpp
+addons:
+  apt:
+    packages: lcov coinor-libsymphony-dev
+
 compiler:
   - clang
   - gcc
 dist: bionic
 
 script:
-  - cmake . -DTESTSUITE=1
-  - make
-  - make test
+  - cmake . -DTESTSUITE=1 -DCODE_COVERAGE=ON
+  - cmake --build . -j $(nproc)
+  - ctest -j $(nproc) --output-on-failure
+
+after_success:
+  - |
+    if [[ "${CXX}" == "g++" ]] ; then
+      lcov --capture --directory . --output-file coverage.info
+      lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
+      lcov --remove coverage.info '*/catch.hpp' --output-file coverage.info # filter system-files
+      lcov --list coverage.info # debug info
+      bash <(curl -s https://codecov.io/bash) -f coverage.info || echo "Failed upload to codecov"
+    fi
+
