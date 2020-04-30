@@ -1,22 +1,21 @@
 #ifndef SMTI_H
 #define SMTI_H
 
+#include <CoinDenseVector.hpp>
+#include <CoinPackedMatrix.hpp>
+#include <OsiSymSolverInterface.hpp>
 #include <algorithm>
+#include <list>
 #include <random>
 #include <string>
 #include <unordered_map>
 
-#ifdef CPLEX_FOUND
-// CPLEX Include
-#include <ilcplex/ilocplex.h>
-// CPLEX Needs this before using STL things
-ILOSTLBEGIN
-
 // The type for our variable storage.
 #include <map>
-typedef std::map<int, std::map<int, IloBoolVar*>> VarMap;
+typedef std::map<int, std::map<int, int>> VarMap;
 
-#endif
+// A type for a matching
+typedef std::list<std::pair<int, int>> Matching;
 
 #include "Agent.h"
 
@@ -142,10 +141,12 @@ class SMTI {
      */
     std::string encodeMZN(bool optimise=false);
 
-#ifdef CPLEX_FOUND
+
+// IP details
+
     /**
      * Formulates the problem as an IP optimisation problem, and solves it
-     * using CPLEX.
+     * using symphony.
      *
      * :param optimise: If false, create a COM-SMTI instance which requires
      * everyone to be in a matching. Note that this assumes that the number of
@@ -153,28 +154,34 @@ class SMTI {
      * :param merged: Should we use merged stability constraints?
      * :return: The number of matchings in the optimal solution.
      */
-    double solve_cplex(bool optimise=true, bool merged=false);
+    Matching solve(bool optimise=true, bool merged=false) const;
 
-    /**
-     * Adds stability constraints to the model. One constraints is generated
-     * for each possibly matched pair.
-     */
-    void cplex_add_single_constraints(IloEnv * env, IloModel * model,
-                                      const VarMap &lr, const VarMap &rl);
 
-    /**
-     * Adds merged stability constraints. See Section 6.1 of
-     * https://doi.org/10.1016/j.ejor.2019.03.017
-     */
-    void cplex_add_merged_constraints(IloEnv * env, IloModel * model,
-                                      const VarMap &lr, const VarMap &rl);
+    class IP_Model {
+      public:
+        IP_Model(const SMTI * parent) : _parent(parent) { }
 
-#endif
+        Matching solve(bool optimise=true, bool merged=false);
+      private:
+        /**
+        * Adds stability constraints to the model. One constraints is generated
+        * for each possibly matched pair.
+        */
+        void add_single_constraints();
 
-    /**
-     * Find a maximum sized stable matching.
-     */
-    void solve() const;
+        /**
+        * Adds merged stability constraints. See Section 6.1 of
+        * https://doi.org/10.1016/j.ejor.2019.03.017
+        */
+        void add_merged_constraints();
+
+        const SMTI * _parent;
+        CoinPackedMatrix _constraints;
+        std::list<double> _lhs;
+        std::list<double> _rhs;
+        VarMap _lr;
+        OsiSymSolverInterface _solverInterface;
+    };
 
   private:
 
@@ -192,6 +199,9 @@ class SMTI {
     std::unordered_map<std::tuple<int,int>, int> _one_vars;
     std::unordered_map<std::tuple<int,int>, int> _two_vars;
 
+    static constexpr float epsilon = 1e-6;
+
+  friend class IP_Model;
 };
 
 #endif /* SMTI_H */
