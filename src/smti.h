@@ -66,12 +66,22 @@ class SMTI {
     /**
      * Return the number of agents on the left.
      */
-    int agents_left() const { return _ones.size(); } ;
+    int num_agents_left() const { return _ones.size(); } ;
 
     /**
      * Return the number of agents on the right.
      */
-    int agents_right() const { return _twos.size(); } ;
+    int num_agents_right() const { return _twos.size(); } ;
+
+    /**
+     * Let people iterate over the agents on the left.
+     */
+    const std::unordered_map<int, Agent> agents_left() const { return _ones; } ;
+
+    /**
+     * Let people iterate over the agents on the right.
+     */
+    const std::unordered_map<int, Agent> agents_right() const { return _twos; } ;
 
     /**
      * Return a given agent.
