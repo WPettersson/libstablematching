@@ -229,13 +229,13 @@ void Agent::remove_preference(const Agent & other) {
 
 std::string Agent::pref_list_string(std::string id_sep, std::string bracket_start, std::string bracket_end) const {
   std::stringstream ss;
-  ss << (this->id() + 1) << id_sep;
+  ss << this->id() << id_sep;
   for(auto pref_group: this->_preferences) {
     if (pref_group.size() == 0) {
       continue;
     }
     if (pref_group.size() == 1) {
-      ss << " " << (pref_group.at(0) + 1);
+      ss << " " << pref_group.at(0);
     } else {
       ss << " " << bracket_start;
       bool first = true;
@@ -244,7 +244,7 @@ std::string Agent::pref_list_string(std::string id_sep, std::string bracket_star
           ss << " ";
         }
         first = false;
-        ss << (pref + 1);
+        ss << pref;
       }
       ss << bracket_end;
     }
