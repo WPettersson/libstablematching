@@ -2,7 +2,7 @@
 #include <CoinPackedVector.hpp>
 #include "smti.h"
 
-#define DEBUG_IP_MODEL
+//#define DEBUG_IP_MODEL
 
 void SMTI::IP_Model::add_single_constraints() {
   // Single stability constraints
