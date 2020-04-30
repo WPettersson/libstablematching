@@ -9,6 +9,7 @@ Agent::Agent(int id, int pref_length, float tie_density,
   std::sample(Agent::preference_options.begin(), Agent::preference_options.end(),
               std::back_inserter(this->_preferencesInOrder),
               pref_length, generator);
+  std::shuffle(_preferencesInOrder.begin(), _preferencesInOrder.end(), generator);
   std::vector<int> tie = std::vector<int>();
   _ranks = std::map<int, int>();
   _max_rank = 0;
