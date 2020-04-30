@@ -72,7 +72,7 @@ TEST_CASE( "Solve medium GRP instance with ties, no merged constraints", "[IP]")
   REQUIRE( matching.size() == 10 );
 }
 
-TEST_CASE( "Solve temdium GRP instance with ties, merged constraints", "[IP]") {
+TEST_CASE( "Solve medium GRP instance with ties, merged constraints", "[IP]") {
   SMTI instance =  SMTI::create_from_GRP("grp-test-medium.instance");
   // Recall, parameters to solve() are optimise, merged
   // if optimise is true, optimise size of matching, else assume every agent
