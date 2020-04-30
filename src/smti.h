@@ -147,21 +147,16 @@ class SMTI {
     /**
      * Formulates the problem as an IP optimisation problem, and solves it
      * using symphony.
-     *
-     * :param optimise: If false, create a COM-SMTI instance which requires
-     * everyone to be in a matching. Note that this assumes that the number of
-     * agents on either side is equal, it does not do this check for you.
-     * :param merged: Should we use merged stability constraints?
-     * :return: The number of matchings in the optimal solution.
      */
-    Matching solve(bool optimise=true, bool merged=false) const;
-
-
     class IP_Model {
       public:
-        IP_Model(const SMTI * parent) : _parent(parent) { }
+        IP_Model(const SMTI * parent) : _parent(parent), _merge(true) { }
 
-        Matching solve(bool optimise=true, bool merged=false);
+        Matching solve();
+
+        void merge(bool to_merge) { _merge = to_merge; };
+        void force(const Matching & forced);
+        void avoid(const Matching & avoided);
       private:
         /**
         * Adds stability constraints to the model. One constraints is generated
@@ -176,6 +171,11 @@ class SMTI {
         void add_merged_constraints();
 
         const SMTI * _parent;
+
+        bool _merge;
+        Matching _forced;
+        Matching _avoided;
+
         CoinPackedMatrix _constraints;
         std::list<double> _lhs;
         std::list<double> _rhs;

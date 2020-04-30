@@ -93,13 +93,20 @@ void SMTI::IP_Model::add_merged_constraints() {
   }
 }
 
-
-Matching SMTI::solve(bool optimise, bool merged) const {
-  IP_Model model(this);
-  return model.solve(optimise, merged);
+void SMTI::IP_Model::force(const Matching & forced) {
+  for(auto [left, right]: forced) {
+    _forced.emplace_back(left, right);
+  }
 }
 
-Matching SMTI::IP_Model::solve(bool optimise, bool merged){
+void SMTI::IP_Model::avoid(const Matching & avoided) {
+  for(auto [left, right]: avoided) {
+    _avoided.emplace_back(left, right);
+  }
+}
+
+
+Matching SMTI::IP_Model::solve(){
   int num_cols = 0;
   for(auto & [key, one]: _parent->_ones) {
     for(int two_id: one.prefs()) {
@@ -128,13 +135,7 @@ Matching SMTI::IP_Model::solve(bool optimise, bool merged){
     }
     _rhs.push_back(1);
     _constraints.appendRow(con);
-    if (optimise) {
-      _lhs.push_back(0);
-    } else {
-      // Not optimising, aka solving for COM-SMTI, so each agent must be
-      // matched exactly once.
-      _lhs.push_back(1);
-    }
+    _lhs.push_back(0);
   }
   // Twos capacity
   for(auto & [key, two]: _parent->_twos) {
@@ -149,15 +150,31 @@ Matching SMTI::IP_Model::solve(bool optimise, bool merged){
     _lhs.push_back(0);
     _constraints.appendRow(con);
   }
-  if (!merged) {
-    add_single_constraints();
-  } else {
+  if (_merge) {
     add_merged_constraints();
+  } else {
+    add_single_constraints();
   }
   double* objective = new double[_constraints.getNumCols()];
   for(int i = 0; i < _constraints.getNumCols(); ++i) {
     objective[i] = 1;
   }
+
+  for(auto [left, right]: _forced) {
+    CoinPackedVector con;
+    con.insert(_lr[left][right], 1);
+    _constraints.appendRow(con);
+    _lhs.push_back(1);
+    _rhs.push_back(1);
+  }
+  for(auto [left, right]: _avoided) {
+    CoinPackedVector con;
+    con.insert(_lr[left][right], 1);
+    _constraints.appendRow(con);
+    _lhs.push_back(0);
+    _rhs.push_back(0);
+  }
+
 
   // Now we have to convert a std::list to a double[]
   double* my_lhs = new double[_constraints.getNumRows()];
@@ -199,7 +216,7 @@ Matching SMTI::IP_Model::solve(bool optimise, bool merged){
   for(auto [left_id, right_map]: _lr) {
     for(auto [right_id, var_id]: right_map) {
       if (_solverInterface.getColSolution()[var_id] >= 1.0 - epsilon) {
-        result.push_back(std::make_pair(left_id, right_id));
+        result.emplace_back(left_id, right_id);
       }
     }
   }
