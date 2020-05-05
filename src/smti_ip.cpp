@@ -1,5 +1,6 @@
 #include <CoinPackedMatrix.hpp>
 #include <CoinPackedVector.hpp>
+#include <OsiSymSolverParameters.hpp>
 #include "smti.h"
 
 //#define DEBUG_IP_MODEL
@@ -235,6 +236,7 @@ Matching SMTI::IP_Model::solve(){
     _solverInterface.setInteger(i);
   }
   _solverInterface.setObjSense(-1.0); // -1.0 is maximise, 1.0 is minimise
+  _solverInterface.setSymParam(OsiSymVerbosity, -2);
   _solverInterface.initialSolve();
   std::list<std::pair<int, int>> result;
   for(auto [left_id, right_map]: _lr) {
