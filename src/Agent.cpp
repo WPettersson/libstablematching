@@ -176,8 +176,8 @@ const std::vector<signed int> Agent::preference_group(int rank) const {
 
 std::list<signed int> Agent::remove_after(unsigned int rank) {
   std::list<signed int> removed;
-  // if rank >= (max_rank - 1), do nothing
-  if ((rank + 1) >= _max_rank) {
+  // if rank >= max_rank, do nothing
+  if (rank  >= _max_rank) {
     return removed;
   }
   // Remove in _preferencesInOrder, if there is something to remove
