@@ -14,11 +14,8 @@
 #include <map>
 typedef std::map<int, std::map<int, int>> VarMap;
 
-// A type for a matching
-typedef std::list<std::pair<int, int>> Matching;
-
 #include "Agent.h"
-
+#include "matching.h"
 
 // We use a tuple to convert variable subscripts to numbers according to DIMACS
 // format, which means we need to hash tuples of two integers.

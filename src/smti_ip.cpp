@@ -238,7 +238,7 @@ Matching SMTI::IP_Model::solve(){
   _solverInterface.setObjSense(-1.0); // -1.0 is maximise, 1.0 is minimise
   _solverInterface.setSymParam(OsiSymVerbosity, -2);
   _solverInterface.initialSolve();
-  std::list<std::pair<int, int>> result;
+  Matching result;
   for(auto [left_id, right_map]: _lr) {
     for(auto [right_id, var_id]: right_map) {
       if (_solverInterface.getColSolution()[var_id] >= 1.0 - epsilon) {
