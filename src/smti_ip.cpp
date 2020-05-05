@@ -109,7 +109,7 @@ std::list<Matching> SMTI::IP_Model::find_all_stable_matchings() {
   Matching newest = solve();
   while (newest.size() > 0) {
     this->avoid_matching(newest);
-    all.push_back(newest);
+    all.push_back(std::move(newest));
     newest = solve();
   }
   return all;
