@@ -44,11 +44,6 @@ class Agent {
     int num_prefs() const {return this->_preferencesInOrder.size(); }
 
     /**
-     * Return a human-readable representation of this agent.
-     */
-    std::string toString();
-
-    /**
      * Return the rank of the given agent according to this agent.
      */
     int rank_of(const Agent & agent) const;
@@ -120,6 +115,11 @@ class Agent {
      */
     void remove_preference(int ident);
     void remove_preference(const Agent & other);
+
+    /**
+     * Return a human-readable representation of this agent.
+     */
+    std::string toString() const { return pref_list_string(); };
 
     /**
      * Returns a string showing this agents preferences.
