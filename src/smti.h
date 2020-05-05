@@ -96,6 +96,11 @@ class SMTI {
     const Agent agent_right(int id) const { return _twos.at(id); } ;
 
     /**
+     * Remove a preference as an option.
+     */
+    void remove_pair(int left, int right);
+
+    /**
      * Modes for preprocessing.
      * Quick: Graph based algorithm from TODO REF
      * Complete: Graph based algorithm from TODO

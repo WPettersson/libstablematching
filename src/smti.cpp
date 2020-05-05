@@ -836,6 +836,13 @@ void SMTI::make_var_map() {
   }
 }
 
+void SMTI::remove_pair(int left, int right) {
+  _ones.at(left).remove_preference(right);
+  _twos.at(right).remove_preference(left);
+}
+
+
+
 std::string SMTI::to_string(std::string id_sep, std::string bracket_start, std::string bracket_end) const {
   std::stringstream ss;
   ss << _ones.size() << std::endl;
