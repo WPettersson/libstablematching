@@ -53,6 +53,11 @@ class SMTI {
     SMTI(const std::vector<std::vector<std::vector<int>>> & ones, const std::vector<std::vector<std::vector<int>>> & twos);
 
     /**
+     * Copy constructor.
+     */
+    SMTI(const SMTI & old);
+
+    /**
      * Construct an instance from a file containing scores of Globally Ranked Pairs.
      * param threshold Assume any scores below this threshold
      */

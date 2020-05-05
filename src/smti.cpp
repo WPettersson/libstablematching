@@ -122,6 +122,16 @@ SMTI::SMTI(std::string filename) : _num_dummies(0) {
   }
 }
 
+SMTI::SMTI(const SMTI & old) {
+  _size = old._size;
+  for(auto [id, left]: old.agents_left()) {
+    _ones.emplace(id, Agent(id, left.preferences()));
+  }
+  for(auto [id, right]: old.agents_right()) {
+    _twos.emplace(id, Agent(id, right.preferences()));
+  }
+}
+
 SMTI::SMTI(const std::vector<std::vector<std::vector<int>>> & ones, const std::vector<std::vector<std::vector<int>>> & twos) :
   _ones(), _twos() {
   _size = ones.size();
