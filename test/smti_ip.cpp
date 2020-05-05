@@ -152,10 +152,6 @@ TEST_CASE( "Solve instance with ties, avoided pairings", "[IP]") {
 
 TEST_CASE( "Count stable matchings in instance with ties ", "[IP]") {
   SMTI instance("test-ties.instance");
-  // Recall, parameters to solve() are optimise, merged
-  // if optimise is true, optimise size of matching, else assume every agent
-  // must be matched (COM-SMTI)
-  // merged is for merging constraints
   SMTI::IP_Model model = SMTI::IP_Model(&instance);
   std::list<Matching> matchings = model.find_all_stable_matchings();
   REQUIRE( matchings.size() == 4 );
