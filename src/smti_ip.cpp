@@ -1,9 +1,19 @@
 #include <CoinPackedMatrix.hpp>
 #include <CoinPackedVector.hpp>
 #include <OsiSymSolverParameters.hpp>
+#include <iterator>
 #include "smti.h"
 
 //#define DEBUG_IP_MODEL
+
+SMTI::IP_Model::~IP_Model() {
+  if (_col_lb) {
+    delete[] _col_lb;
+  }
+  if (_col_ub) {
+    delete[] _col_ub;
+  }
+}
 
 void SMTI::IP_Model::add_single_constraints() {
   // Single stability constraints
@@ -94,23 +104,34 @@ void SMTI::IP_Model::add_merged_constraints() {
   }
 }
 
+std::list<Matching> SMTI::IP_Model::find_all_stable_matchings() {
+  std::list<Matching> all;
+  Matching newest = solve();
+  while (newest.size() > 0) {
+    this->avoid_matching(newest);
+    all.push_back(newest);
+    newest = solve();
+  }
+  return all;
+}
+
 void SMTI::IP_Model::force(const Matching & forced) {
   for(auto [left, right]: forced) {
-    _forced.emplace_back(left, right);
+    _to_force.emplace_back(left, right);
   }
 }
 
 void SMTI::IP_Model::avoid(const Matching & avoided) {
   for(auto [left, right]: avoided) {
-    _avoided.emplace_back(left, right);
+    _to_avoid.emplace_back(left, right);
   }
 }
 
 void SMTI::IP_Model::avoid_matching(const Matching & avoid) {
-  _avoided_matchings.push_back(avoid);
+  _to_avoid_matchings.push_back(avoid);
 }
 
-Matching SMTI::IP_Model::solve(){
+void SMTI::IP_Model::build_base() {
   int num_cols = 0;
   for(auto & [key, one]: _parent->_ones) {
     for(int two_id: one.prefs()) {
@@ -122,11 +143,11 @@ Matching SMTI::IP_Model::solve(){
     }
   }
   _constraints.setDimensions(0, num_cols);
-  double* col_lb = new double[num_cols];
-  double* col_ub = new double[num_cols];
+  _col_lb = new double[num_cols];
+  _col_ub = new double[num_cols];
   for(int i = 0; i < num_cols; ++i) {
-    col_lb[i] = 0;
-    col_ub[i] = 1;
+    _col_lb[i] = 0;
+    _col_ub[i] = 1;
   }
   // Ones capacity
   for(auto & [key, one]: _parent->_ones) {
@@ -159,27 +180,29 @@ Matching SMTI::IP_Model::solve(){
   } else {
     add_single_constraints();
   }
-  double* objective = new double[_constraints.getNumCols()];
-  for(int i = 0; i < _constraints.getNumCols(); ++i) {
-    objective[i] = 1;
-  }
+}
 
-  for(auto [left, right]: _forced) {
+void SMTI::IP_Model::build_avoids_forces() {
+  for(auto [left, right]: _to_force) {
     CoinPackedVector con;
     con.insert(_lr[left][right], 1);
     _constraints.appendRow(con);
     _lhs.push_back(1);
     _rhs.push_back(1);
   }
-  for(auto [left, right]: _avoided) {
+  std::move(_to_force.begin(), _to_force.end(), std::back_inserter(_forced));
+  _to_force.clear();
+  for(auto [left, right]: _to_avoid) {
     CoinPackedVector con;
     con.insert(_lr[left][right], 1);
     _constraints.appendRow(con);
     _lhs.push_back(0);
     _rhs.push_back(0);
   }
+  std::move(_to_avoid.begin(), _to_avoid.end(), std::back_inserter(_avoided));
+  _to_avoid.clear();
 
-  for(auto avoid: _avoided_matchings) {
+  for(auto avoid: _to_avoid_matchings) {
     // Avoid the given matching
     // We have two options - one way is to sum the variables in the matching,
     // ensure that this sum is not equal to the size of this matching. However,
@@ -200,8 +223,22 @@ Matching SMTI::IP_Model::solve(){
     // most (avoid.size() - 1)
     _rhs.push_back(avoid.size() - 1);
   }
+  std::move(_to_avoid_matchings.begin(), _to_avoid_matchings.end(), std::back_inserter(_avoided_matchings));
+  _to_avoid_matchings.clear();
+}
 
-  // Now we have to convert a std::list to a double[]
+Matching SMTI::IP_Model::solve(){
+  if (!_built) {
+    build_base();
+    _built = true;
+  }
+  build_avoids_forces();
+  double* objective = new double[_constraints.getNumCols()];
+  for(int i = 0; i < _constraints.getNumCols(); ++i) {
+    objective[i] = 1;
+  }
+
+  // Now we have to convert our std::list to a double[]
   double* my_lhs = new double[_constraints.getNumRows()];
   double* my_rhs = new double[_constraints.getNumRows()];
   {
@@ -231,7 +268,7 @@ Matching SMTI::IP_Model::solve(){
     std::cout << col_lb[col] << " ≤ " << "x" << col << " ≤ " << col_ub[col] << std::endl;
   }
 #endif
-  _solverInterface.loadProblem(_constraints, col_lb, col_ub, objective, my_lhs, my_rhs);
+  _solverInterface.loadProblem(_constraints, _col_lb, _col_ub, objective, my_lhs, my_rhs);
   for(int i = 0; i < _constraints.getNumCols(); ++i) {
     _solverInterface.setInteger(i);
   }
@@ -246,8 +283,6 @@ Matching SMTI::IP_Model::solve(){
       }
     }
   }
-  delete[] col_lb;
-  delete[] col_ub;
   delete[] objective;
   delete[] my_lhs;
   delete[] my_rhs;

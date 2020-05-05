@@ -2,12 +2,13 @@
 #define MATCHING_H
 
 #include <list>
-
+#include <string>
+#include <sstream>
 
 class Matching : public std::list<std::pair<int, int>> {
   public:
     inline bool has(const std::pair<int, int> & match) const;
-
+    inline std::string toString() const;
   private:
 
 };
@@ -32,6 +33,19 @@ inline bool operator==(const Matching & lhs, const Matching & rhs) {
     }
   }
   return true;
+}
+
+inline std::string Matching::toString() const {
+  std::stringstream ss;
+  bool first = true;
+  for(const auto & [left, right]: *this) {
+    if (! first) {
+      ss << ", ";
+    }
+    ss << "(" << left << ", " << right << ")";
+    first = false;
+  }
+  return ss.str();
 }
 
 

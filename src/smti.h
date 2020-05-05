@@ -162,9 +162,20 @@ class SMTI {
      */
     class IP_Model {
       public:
-        IP_Model(const SMTI * parent) : _parent(parent), _merge(true) { }
+        IP_Model(const SMTI * parent) : _parent(parent), _built(false), _merge(true),
+                                        _col_ub(nullptr), _col_lb(nullptr) { }
 
+        ~IP_Model();
+
+        /**
+         * Find a stable matching of largest size.
+         */
         Matching solve();
+
+        /**
+         * Finds all stable matchings.
+         */
+        std::list<Matching> find_all_stable_matchings();
 
         /**
          * Should merged stability constraints be used when building?
@@ -204,16 +215,31 @@ class SMTI {
         */
         void add_merged_constraints();
 
+        void build_base();
+
+        void build_avoids_forces();
+
         const SMTI * _parent;
 
+        bool _built;
         bool _merge;
+
+        // For the below 6 variables, if the name starts with "_to_" then the
+        // correspond variable stores constraints that have not yet been added
+        // to a model, while the others store constraints that are already
+        // added.
+        Matching _to_force;
         Matching _forced;
+        Matching _to_avoid;
         Matching _avoided;
+        std::list<Matching> _to_avoid_matchings;
         std::list<Matching> _avoided_matchings;
 
         CoinPackedMatrix _constraints;
         std::list<double> _lhs;
         std::list<double> _rhs;
+        double* _col_ub;
+        double* _col_lb;
         VarMap _lr;
         OsiSymSolverInterface _solverInterface;
     };
