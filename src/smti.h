@@ -169,9 +169,31 @@ class SMTI {
 
         Matching solve();
 
+        /**
+         * Should merged stability constraints be used when building?
+         * See Section 6.1 of https://doi.org/10.1016/j.ejor.2019.03.017
+         */
         void merge(bool to_merge) { _merge = to_merge; };
+
+        /**
+         * Force the pairs in forced to be in the matching.
+         */
         void force(const Matching & forced);
+
+        /**
+         * Ensure that the pairs in avoided are not in a found matching.
+         */
         void avoid(const Matching & avoided);
+
+        /**
+         * Ensure that the matching found does not contain the given as a
+         * subtructure. If a given matching is stable (and therefore maximal),
+         * this is equivalent to looking for a matching that is distinct from
+         * the given.
+         * Creates a copy of avoid, so the original can be modified.
+         */
+        void avoid_matching(const Matching & avoid);
+
       private:
         /**
         * Adds stability constraints to the model. One constraints is generated
@@ -190,6 +212,7 @@ class SMTI {
         bool _merge;
         Matching _forced;
         Matching _avoided;
+        std::list<Matching> _avoided_matchings;
 
         CoinPackedMatrix _constraints;
         std::list<double> _lhs;

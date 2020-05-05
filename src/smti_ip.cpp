@@ -105,6 +105,9 @@ void SMTI::IP_Model::avoid(const Matching & avoided) {
   }
 }
 
+void SMTI::IP_Model::avoid_matching(const Matching & avoid) {
+  _avoided_matchings.push_back(avoid);
+}
 
 Matching SMTI::IP_Model::solve(){
   int num_cols = 0;
@@ -175,6 +178,27 @@ Matching SMTI::IP_Model::solve(){
     _rhs.push_back(0);
   }
 
+  for(auto avoid: _avoided_matchings) {
+    // Avoid the given matching
+    // We have two options - one way is to sum the variables in the matching,
+    // ensure that this sum is not equal to the size of this matching. However,
+    // this blocks the given matching as a sub-structure too.
+    // The other option is to, for each pair P in matching, add a variable x_P
+    // with the constraint x_P <= (1-P) (i.e., x_P can be 1 if and only if P is
+    // 0) and a final constraint ensuring sum(x_P) >= 1 (i.e., at least one
+    // variable is different.
+    // Currently I'm implementing the first, as it doesn't require more
+    // variables.
+    CoinPackedVector con;
+    for(auto [left, right]: avoid) {
+      con.insert(_lr[left][right], 1);
+    }
+    _constraints.appendRow(con);
+    _lhs.push_back(0);
+    // Ensure the number of common variables between avoid and a solution is at
+    // most (avoid.size() - 1)
+    _rhs.push_back(avoid.size() - 1);
+  }
 
   // Now we have to convert a std::list to a double[]
   double* my_lhs = new double[_constraints.getNumRows()];
