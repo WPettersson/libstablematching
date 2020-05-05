@@ -276,6 +276,9 @@ Matching SMTI::IP_Model::solve(){
   _solverInterface.setSymParam(OsiSymVerbosity, -2);
   _solverInterface.initialSolve();
   Matching result;
+  if (! _solverInterface.isProvenOptimal()) {
+    return result;
+  }
   for(auto [left_id, right_map]: _lr) {
     for(auto [right_id, var_id]: right_map) {
       if (_solverInterface.getColSolution()[var_id] >= 1.0 - epsilon) {
