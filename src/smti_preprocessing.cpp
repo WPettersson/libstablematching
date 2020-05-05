@@ -36,8 +36,7 @@ int single_reduction(std::unordered_map<int, Agent> & to_preprocess,
                         these_always_allocated.end())) {
         continue;
       }
-      for (size_t ind = 0; ind < pref_tie.size(); ind++) {
-        int position = pref_tie[ind];
+      for (auto position: pref_tie) {
         g.addVertex(1, position);
         Agent &other = other_side.at(position);
         for (int l = 0; l <= other.rank_of(agent.id()); l++) {
