@@ -5,6 +5,7 @@ SET(SOURCES
   smti_preprocess.cpp
   smti_pbo.cpp
   smti_ip.cpp
+  smti_basic.cpp
   )
 
 ADD_EXECUTABLE(tests ${SOURCES})
