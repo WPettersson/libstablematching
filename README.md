@@ -26,7 +26,7 @@ Next steps might include:
 
 ### Dummy variables
 
-The two SAT encodings allow one to check for a complete stable matching. To
+The two SAT encodings check for a complete stable matching. To
 check for a largest-size stable matching, one can add dummy agents using
 SMTI::add_dummy(). This adds one dummy agent to either side, each of which
 finds all other agents equally acceptable. If adding *n-1* dummy agents results
@@ -40,26 +40,30 @@ agents.
 
 ### SAT
 
-The SAT encoding produced is in DIMACS cnf form (see
-[https://github.com/elffersj/roundingsat/blob/master/InputFormats.md](https://github.com/elffersj/roundingsat/blob/master/InputFormats.md)).
+The produced file is encoded in [DIMACS cnf](http://www.domagoj-babic.com/uploads/ResearchProjects/Spear/dimacs-cnf.pdf).
+This encoding only looks for a stable matching, not a maximum-sized one.
 
 ### Weighted Pseudo MaxSAT
 
-The encoding is in a similar DIMACS form (see
+The produced file is encoded in a similar DIMACS form (see
 [http://maxsat.ia.udl.cat/requirements/](http://maxsat.ia.udl.cat/requirements/)).
+
 
 ### Pseudo Boolean Optimisation
 
-This uses the OPB format as described in
-[https://github.com/elffersj/roundingsat/blob/master/InputFormats.md](https://github.com/elffersj/roundingsat/blob/master/InputFormats.md).
+This creates files in the [OPB](https://www.cril.univ-artois.fr/PB10/format.pdf) format.
 The objective in such an encoding is to minimise the number of agents who are
 not matched.
 
+
+### Minizinc Format
+
+This creates a file suitable for use with [Minizinc](https://www.minizinc.org/), with an optional parameter to toggle between either find any stable matching or find a largest-size stable matching.
+
 ### Integer programming optimisation
 
-This actually calls CPLEX directly, but CPLEX creates an LP file as a
-by-product.
-The objective here is to maximise the number of matched pairs. This means that
-the total number of matched agents is twice the objective.
+Currently the IP is directly solved with [Symphony](https://coin-or.github.io/SYMPHONY/).
+The basic model is taken from [https://doi.org/10.1016/j.ejor.2019.03.017](https://doi.org/10.1016/j.ejor.2019.03.017) (lines (1) through (5)). Stability constraint merging (as described in [https://doi.org/10.1016/j.ejor.2019.03.017](https://doi.org/10.1016/j.ejor.2019.03.017)) is also supported as an option.
+The solver is accessed via OsiSolverInterface, so adaptations to other solvers should not be too difficult.
 
 
