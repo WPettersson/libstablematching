@@ -4,6 +4,7 @@ SET(SOURCES
   smti_grp.cpp
   smti_preprocessing.cpp
   smti_ip.cpp
+  smti_encodings.cpp
   Graph.cpp
   )
 

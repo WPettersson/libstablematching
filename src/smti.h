@@ -146,7 +146,13 @@ class SMTI {
     std::string encodePBO();
 
     /**
-     * Create a pseudo-boolean optimisation encoding of the instance, with a PB-solver-friendly encoding.
+     * Create a pseudo-boolean optimisation encoding of the instance, with an
+     * additional constraint that ensures the number of agents from the left in
+     * the matching is equal to the number of matchings from the right in the
+     * matching. This seems trivial as a human, but has been shown in some
+     * cases to dramatically affect the running time.
+     *
+     * param merged If true, use stability merging.
      */
     std::string encodePBO2(bool merged=false);
 
