@@ -21,6 +21,7 @@ SMTI::SMTI(int size, int pref_length, float tie_density, std::mt19937 & generato
     }
   }
   for(int i = 1; i <= size; ++i) {
+    std::shuffle(two_prefs[i].begin(), two_prefs[i].end(), generator);
     _twos.emplace(i, Agent(i, two_prefs[i], tie_density, generator));
   }
 }
