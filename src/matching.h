@@ -1,12 +1,15 @@
 #ifndef MATCHING_H
 #define MATCHING_H
 
+#include <initializer_list>
 #include <list>
 #include <string>
 #include <sstream>
 
 class Matching : public std::list<std::pair<int, int>> {
   public:
+    Matching() = default;
+    Matching(std::initializer_list<std::pair<int, int>> l) : std::list<std::pair<int, int>>(l) { }
     inline bool has(const std::pair<int, int> & match) const;
     inline std::string toString() const;
   private:
@@ -28,7 +31,7 @@ inline bool operator==(const Matching & lhs, const Matching & rhs) {
     return false;
   }
   for(const auto & left: lhs) {
-    if (rhs.has(left)) {
+    if (! rhs.has(left)) {
       return false;
     }
   }
