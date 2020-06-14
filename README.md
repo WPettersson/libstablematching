@@ -2,38 +2,46 @@
 
 [![Build Status](https://travis-ci.org/WPettersson/libstablematching.svg?branch=master)](https://travis-ci.org/WPettersson/libstablematching)[![codecov](https://codecov.io/gh/WPettersson/libstablematching/branch/master/graph/badge.svg)](https://codecov.io/gh/WPettersson/libstablematching)
 
-This software creates random SMTI instances, and produces various types of
-encodings for said instance for use in benchmarking various types of solvers.
-For a background on what SMTI is, see the introduction in
+This library provides numerous ways of interacting with various stable matching
+problems. For now, we only deal with instances of SMTI, or Stable Matching
+problems with Ties and Incomplete lists, where agents do not have any capacity.
 
-Mathematical models for stable matching problems with ties and incomplete
-lists. M. Delorme, S. García, J. Gondzio, J. Kalcsics, D. Manlove, W.
-Pettersson.
-[https://doi.org/10.1016/j.ejor.2019.03.017](https://doi.org/10.1016/j.ejor.2019.03.017)
 
-This software currently supports the following problem types:
+For a background on stable matchings, see one of the following:
 
- * SAT
+* Algorithmics of Matching under Preferences. David. Manlove. World Scientific, 2013. [http://www.optimalmatching.com/AMUP](http://www.optimalmatching.com/AMUP)
+
+* Mathematical models for stable matching problems with ties and incomplete lists. M. Delorme, S. García, J. Gondzio, J. Kalcsics, D. Manlove, W.  Pettersson, 2019.  [https://doi.org/10.1016/j.ejor.2019.03.017](https://doi.org/10.1016/j.ejor.2019.03.017)
+
+
+This software can currently encode MaxSMTI, the problem of finding a largest stable matching, into the following problem types:
+
+ * SAT problem
  * Weighted Pseudo MaxSAT
  * Pseudo Boolean Optimisation
  * Integer Programming Optimisation
-
-Next steps might include:
-
  * Pseudo Boolean SAT
 
 ## Features
+
+### Preprocessing
+
+libstablematching supports preprocessing as defined in "Mathematical models for
+stable matching problems with ties and incomplete lists". This preprocessing
+will reduce a stable matching problem by marking as unacceptable pairs that
+will never be in any stable matching.
+As such, this preprocessing is useful for find optimal stable matchings for a
+variety of definitions of optimal.
 
 ### Dummy variables
 
 The two SAT encodings check for a complete stable matching. To
 check for a largest-size stable matching, one can add dummy agents using
-SMTI::add_dummy(). This adds one dummy agent to either side, each of which
+`SMTI::add_dummy().` This adds one dummy agent to either side, each of which
 finds all other agents equally acceptable. If adding *n-1* dummy agents results
 in an unsatisfiable instance, but adding *n* dummy variables makes the
 instances satisfiable, then the largest size stable matching has *n* unmatched
 agents.
-
 
 
 ## Encoding types
