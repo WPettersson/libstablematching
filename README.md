@@ -1,6 +1,6 @@
-# SMTI encoder
+# libstablematching
 
-[![Build Status](https://travis-ci.org/WPettersson/smti-encoder.svg?branch=master)](https://travis-ci.org/WPettersson/smti-encoder)[![codecov](https://codecov.io/gh/WPettersson/smti-encoder/branch/master/graph/badge.svg)](https://codecov.io/gh/WPettersson/smti-encoder)
+[![Build Status](https://travis-ci.org/WPettersson/libstablematching.svg?branch=master)](https://travis-ci.org/WPettersson/libstablematching)[![codecov](https://codecov.io/gh/WPettersson/libstablematching/branch/master/graph/badge.svg)](https://codecov.io/gh/WPettersson/libstablematching)
 
 This software creates random SMTI instances, and produces various types of
 encodings for said instance for use in benchmarking various types of solvers.
