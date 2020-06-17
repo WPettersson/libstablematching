@@ -17,9 +17,7 @@ after_success:
   - |
     if [[ "${CXX}" == "g++" ]] ; then
       lcov --capture --directory . --output-file coverage.info
-      lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
-      lcov --remove coverage.info '*/catch.hpp' --output-file coverage.info # filter test suite
-      lcov --remove coverage.info 'test/*' --output-file coverage.info # filter test suite
+      lcov --remove coverage.info '/usr/*' '*/catch.hpp' '*/libstablematching/test/*' --output-file coverage.info # filter coverage
       lcov --list coverage.info # debug info
       bash <(curl -s https://codecov.io/bash) -f coverage.info || echo "Failed upload to codecov"
     fi
