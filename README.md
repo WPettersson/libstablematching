@@ -1,6 +1,6 @@
 # libstablematching
 
-[![Build Status](https://travis-ci.org/WPettersson/libstablematching.svg?branch=master)](https://travis-ci.org/WPettersson/libstablematching)[![codecov](https://codecov.io/gh/WPettersson/libstablematching/branch/master/graph/badge.svg)](https://codecov.io/gh/WPettersson/libstablematching)
+[![Build Status](https://www.travis-ci.com/WPettersson/libstablematching.svg?branch=main)](https://www.travis-ci.com/WPettersson/libstablematching)[![codecov](https://codecov.io/gh/WPettersson/libstablematching/branch/master/graph/badge.svg)](https://codecov.io/gh/WPettersson/libstablematching)
 
 This library provides numerous ways of interacting with various stable matching
 problems. For now, we only deal with instances of SMTI, or Stable Matching
